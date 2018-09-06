@@ -67,10 +67,10 @@ fact 0 = 1
 fact n = n * fact(n-1)
 
 permCalc :: [Int] -> Int
-permCalc l = quot (fact (length l)) (instanceFacts l)
+permCalc l = quot (fact (length l)) (instanceFact l)
 
-instanceFacts :: [Int] -> Int
-instanceFacts l = foldl (*) 1 (map (\x -> fact(x)) (instanceCount l))
+instanceFact :: [Int] -> Int
+instanceFact l = foldl (*) 1 (map (\x -> fact(x)) (instanceCount l))
 
 instanceCount :: [Int] -> [Int]
 instanceCount l = instanceCount' [] l
@@ -87,7 +87,8 @@ instanceCount' counts instances =
 -- =========
 -- === 4 ===
 -- =========
-
+revPrimes :: [Int]
+revPrimes = filter (\x -> (prime x) && (prime (reversal x))) [1..10000]
 
 -- =========
 -- === 5 ===
