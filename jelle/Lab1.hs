@@ -21,7 +21,7 @@ p --> q = (not p) || q
 forall :: [a] -> (a -> Bool) -> Bool
 forall = flip all
 
-reversal :: Integer -> Integer
+reversal :: Int -> Int
 reversal = read . reverse . show
 
 data Boy = Matthew | Peter | Jack | Arnold | Carl 
@@ -59,7 +59,30 @@ tripSumTest y = tripSum (abs y) == tripSum' (abs y)
 -- =========
 -- === 3 ===
 -- =========
+count :: Int -> [Int] -> Int
+count x = length . filter (==x)
 
+fact :: Int -> Int
+fact 0 = 1
+fact n = n * fact(n-1)
+
+permCalc :: [Int] -> Int
+permCalc l = quot (fact (length l)) (instanceFacts l)
+
+instanceFacts :: [Int] -> Int
+instanceFacts l = foldl (*) 1 (map (\x -> fact(x)) (instanceCount l))
+
+instanceCount :: [Int] -> [Int]
+instanceCount l = instanceCount' [] l
+
+instanceCount' :: [Int] -> [Int] -> [Int]
+instanceCount' l [] = l
+instanceCount' counts instances = 
+    let thisInstance = head instances
+        thisInstanceCount = count thisInstance instances
+        nextCounts = thisInstanceCount:counts
+        nextInstances = filter (/=thisInstance) instances
+    in instanceCount' nextCounts nextInstances
 
 -- =========
 -- === 4 ===
@@ -87,30 +110,30 @@ consPrimes' n primeList =
 -- =========
 -- === 7 ===
 -- =========
-intToList :: Integer -> [Integer]
+intToList :: Int -> [Int]
 intToList 0 = []
 intToList n = (intToList (quot n 10)) ++ [mod n 10]
 
-listToInt :: [Integer] -> Integer
+listToInt :: [Int] -> Int
 listToInt [] = 0
 listToInt l = 
     (last l) + 10 * listToInt (init l)
 
 
-odds :: [Integer] -> Bool -> [Integer]
+odds :: [Int] -> Bool -> [Int]
 odds [] _ = []
 odds list thisOne = if thisOne
     then last list : odds (init list) False
     else odds (init list) True
 
-specialDouble :: [Integer] -> [Integer]
+specialDouble :: [Int] -> [Int]
 specialDouble [] = []
 specialDouble (x:xs) = 
     if x+x > 9 
         then (x+x-9) : (specialDouble xs)
         else (x+x) : (specialDouble xs)
 
-luhn :: Integer -> Bool
+luhn :: Int -> Bool
 luhn n = 
     let nList = intToList n 
         list1 = odds nList False
@@ -119,7 +142,7 @@ luhn n =
     in if mod total 10 == 0
         then True else False
 
-isAmericanExpress :: Integer -> Bool
+isAmericanExpress :: Int -> Bool
 isAmericanExpress n = 
     let l = intToList n
         firstTwo = listToInt (take 2 l)
@@ -128,7 +151,7 @@ isAmericanExpress n =
         (firstTwo == 34 || firstTwo == 37) &&
         (luhn n) then True else False
 
-isMaster :: Integer -> Bool
+isMaster :: Int -> Bool
 isMaster n =
     let l = intToList n
         firstTwo = listToInt (take 2 l)
@@ -139,7 +162,7 @@ isMaster n =
             (elem firstTwo [51..55])) &&
         (luhn n) then True else False
 
-isVisa :: Integer -> Bool
+isVisa :: Int -> Bool
 isVisa n = 
     if  (elem (length (intToList n)) [13,16,19]) &&
         ((head (intToList n)) == 4) &&
