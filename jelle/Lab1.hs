@@ -84,6 +84,13 @@ instanceCount' counts instances =
         nextInstances = filter (/=thisInstance) instances
     in instanceCount' nextCounts nextInstances
 
+perms :: Eq a => [a] -> [[a]]
+perms [] = [[]]
+perms (x:xs) = concat (map (insrt x) (perms xs)) where
+    insrt x [] = [[x]]
+    insrt x (y:ys) = (x:y:ys) : map (y:) (insrt x ys)
+
+
 -- =========
 -- === 4 ===
 -- =========
@@ -176,3 +183,18 @@ isVisa n =
         ((head (intToList n)) == 4) &&
         (luhn n) then True else False
 
+-- =========
+-- === 8 ===
+-- =========
+
+-- accuses :: Boy -> Boy -> Bool
+combinations :: Eq a => [a] -> [[a]]
+combinations l = rmDups (perms l)
+
+rmDups :: Eq a => [[a]] -> [[a]]
+rmDups [] = []
+rmDups (x:xs) = if elem x xs
+    then rmDups xs else x:(rmDups xs)
+
+guiltyOptions = combinations [True, False, False, False, False]
+truthOptions = combinations [True, True, True, False, False]
