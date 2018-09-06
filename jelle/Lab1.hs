@@ -106,7 +106,14 @@ consPrimes' n primeList =
 -- =========
 -- === 6 ===
 -- =========
+conjCounter :: [Int]
+conjCounter = conjCounter' 1
 
+conjCounter' :: Int -> [Int]
+conjCounter' n =
+    if (not (prime ((foldr (*) 1 (take n primes)) + 1)))
+        then ((foldr (*) 1 (take n primes)) + 1) : conjCounter' (n+1)
+        else conjCounter' (n+1)
 
 -- =========
 -- === 7 ===
