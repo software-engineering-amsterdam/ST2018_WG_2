@@ -217,14 +217,28 @@ specPythTrip' ((a,b,c):xs) = if a + b + c == 1000
 -- ================
 -- === EULER 10 ===
 -- ================
-sieve :: [Integer] -> [Integer]
+sieve :: [Int] -> [Int]
+sieve [] = []
 sieve (n:ns) = n : sieve (filter (\m -> rem m n /= 0) ns)
 
-sumOfTwoMilPrimes :: Integer
+sumOfTwoMilPrimes :: Int
 sumOfTwoMilPrimes = sumOfTwoMilPrimes' (sieve (2:[3,5..])) 0
 
-sumOfTwoMilPrimes' :: [Integer] -> Integer -> Integer
+sumOfTwoMilPrimes' :: [Int] -> Int -> Int
 sumOfTwoMilPrimes' (x:xs) n = 
     if x >= 2000000 then n
         else sumOfTwoMilPrimes' xs n+x
 
+-- ================
+-- === EULER 49 ===
+-- ================
+fourDigitPrimes = sieve [1001,1003..9999]
+
+permutation :: Int -> Int -> Bool
+permutation x y = 
+    let x = listToInt (sort (intToList x))
+        y = listToInt (sort (intToList y))
+    in x == y
+
+seqPermPrimes :: (Int, Int, Int)
+seqPermPrimes = 
