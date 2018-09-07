@@ -232,13 +232,16 @@ sumOfTwoMilPrimes' (x:xs) n =
 -- ================
 -- === EULER 49 ===
 -- ================
-fourDigitPrimes = sieve [1001,1003..9999]
-
 permutation :: Int -> Int -> Bool
-permutation x y = 
-    let x = listToInt (sort (intToList x))
-        y = listToInt (sort (intToList y))
-    in x == y
+permutation x y = listToInt (sort (intToList x)) == listToInt (sort (intToList y))
 
 seqPermPrimes :: (Int, Int, Int)
-seqPermPrimes = 
+seqPermPrimes = head (tail [(x,y,z) |  x <- [1001,1003..9999], 
+                            prime x,
+                            y <- [x+2 .. 9999],
+                            prime y,
+                            let z = y + (y-x),
+                            z < 10000, 
+                            prime z,
+                            permutation x y,
+                            permutation y z])
