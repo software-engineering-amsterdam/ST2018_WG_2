@@ -198,3 +198,33 @@ rmDups (x:xs) = if elem x xs
 
 guiltyOptions = combinations [True, False, False, False, False]
 truthOptions = combinations [True, True, True, False, False]
+
+-- ===============
+-- === EULER 9 ===
+-- ===============
+pythTrips :: [(Int, Int, Int)]
+pythTrips = [(x,y,z) | x <- [1..500], y <- [x..500], z <- [y..500], x^2 + y^2 == z^2]
+
+specPythTripProd :: Int
+specPythTripProd = 
+    let (a,b,c) = specPythTrip' pythTrips
+    in a*b*c
+
+specPythTrip' :: [(Int, Int, Int)] -> (Int, Int, Int)
+specPythTrip' ((a,b,c):xs) = if a + b + c == 1000
+    then (a,b,c) else specPythTrip' xs
+
+-- ================
+-- === EULER 10 ===
+-- ================
+sieve :: [Integer] -> [Integer]
+sieve (n:ns) = n : sieve (filter (\m -> rem m n /= 0) ns)
+
+sumOfTwoMilPrimes :: Integer
+sumOfTwoMilPrimes = sumOfTwoMilPrimes' (sieve (2:[3,5..])) 0
+
+sumOfTwoMilPrimes' :: [Integer] -> Integer -> Integer
+sumOfTwoMilPrimes' (x:xs) n = 
+    if x >= 2000000 then n
+        else sumOfTwoMilPrimes' xs n+x
+
