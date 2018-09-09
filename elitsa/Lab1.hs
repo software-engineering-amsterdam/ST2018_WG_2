@@ -47,41 +47,41 @@ cPrimes x primeList =
 		  else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
 
 
+-- Task 7
 
+intToList:: Int -> [Int]
+intToList 0 = []
+intToList x =   intToList(x `quot`  10) ++ [x `mod` 10]
 
+getEvenOnes:: [Int] -> [Int]
+getEvenOnes [] = [] -- 
+getEvenOnes (x:[]) = [] 
+getEvenOnes x =  last(init x) : getEvenOnes(init(init x))
 
--- if sum take 3 prime -> return the numbers
--- else sum take
+getOddOnes:: [Int] -> [Int]
+getOddOnes [] = [] -- 
+getOddOnes (x:[]) = [] 
+getOddOnes x =  last(x) : getEvenOnes(init(x))
 
--- intToList:: Int -> [Int]
--- intToList 0 = []
--- intToList x = intToList(quot x 10) ++ [mod x 10] 
+	
+sumIfMoreThan10 :: [Int] -> [Int]
+sumIfMoreThan10 [] = []
+sumIfMoreThan10 (x:xs) = 
+    if x > 9  
+        then (x - 9) : (sumIfMoreThan10 xs)
+        else x : (sumIfMoreThan10 xs)
 
--- odds:: [Int] -> [Int]
--- odds xs = [x | x <- xs, odd x]
+doubleList:: [Int] -> [Int] 
+doubleList xs = [x*2 | x <-xs]                   
 
--- specialDouble:: Int -> Int
--- specialDouble x = x
--- sumIfMoreThan10:: [Int] -> [Int]
--- sumIfMoreThan10 xs = 
-		
+luhn:: Int -> Bool
+luhn x = 
+      let cardNumberList = intToList x
+          oddOnes = getOddOnes cardNumberList
+          evenOnes = getEvenOnes cardNumberList
+          doubleEvens = doubleList evenOnes
+          summEvens = sumIfMoreThan10 doubleEvens
+          product = sum(summEvens) + sum(oddOnes)
+      in  mod product 10 == 0
 
-
---luhn :: Int -> Bool
-
-
-
--- consPrimes :: Int -> [Int]
--- consPrimes n = consPrimes' n primes
-
--- consPrimes' :: Int -> [Int] -> [Int]
--- consPrimes' n primeList = 
---     if prime (sum (take n primeList))
---         then sum (take n primeList) : consPrimes' n (tail primeList)
---         else consPrimes' n (tail primeList)
-
--- bmiTell:: a -> a -> String
--- bmiTell weight height 
--- 		| weight /height <= 18.5 = "You are"
--- 		| otherwise              =
 
