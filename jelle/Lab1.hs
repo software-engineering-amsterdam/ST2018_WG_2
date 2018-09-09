@@ -187,7 +187,12 @@ isVisa n =
 -- === 8 ===
 -- =========
 
--- accuses :: Boy -> Boy -> Bool
+-- Our approach is to construct a search space of all possible world states.
+-- Each world state is a tuple of five Integers of value 0 or 1, indicating
+-- for each Boy whether they are being truthful or not. We construct this list
+-- of tuples by taking all combinations of the list [1,1,1,0,0], removing the
+-- duplicates, and mapping a list to tuple converter over this array. 
+-- The truthOptions does all this in one fell swoop / line of code
 combinations :: Eq a => [a] -> [[a]]
 combinations l = rmDups (perms l)
 
@@ -196,8 +201,68 @@ rmDups [] = []
 rmDups (x:xs) = if elem x xs
     then rmDups xs else x:(rmDups xs)
 
-guiltyOptions = combinations [True, False, False, False, False]
-truthOptions = combinations [True, True, True, False, False]
+listToTuple :: Num a => [a] -> (a,a,a,a,a)
+listToTuple (a:b:c:d:e:[]) = (a,b,c,d,e)
+
+truthOptions :: (Eq a, Num a) => [(a,a,a,a,a)]
+truthOptions = map listToTuple (combinations [1,1,1,0,0])
+
+-- Having found our search space, we can start eliminating some of them by applying
+-- predicates that we can derive from the logic of all of the statements. If 
+-- some combinations of true and/or false statements yield internally inconsistent
+-- formulas, we can remove them from the search space. This way, we are hopefully
+-- left with a singleton list containing indicators of who is and who isn't
+-- telling the truth.
+
+-- The statements by Albert and Carl are mutually incompatible, so we can eliminate
+-- all solutions where they are either both lying or telling the truth
+predicate1 (m,p,j,a,c) = if a == c then False else True
+
+-- If Albert is telling the truth, then Albert and Peter can't both 
+-- either be telling the truth or both be lying. Hence, if they are
+-- equally truthful, eliminate the hypothesis
+predicate2 (m,p,j,a,c) = if a == 1 && m == p then False else True
+
+-- If Albert is lying, the only way for his statement to be evaluated as
+-- False is if Matthew and Peter ARE equally as truthful. If this is not
+-- the case, we have found an inconsistency, eliminate.
+predicate3 (m,p,j,a,c) = if a == 0 && m /= p then False else True
+
+-- If Jack is telling the truth, then neither Michael nor Peter can be telling
+-- telling the truth. If either one of them is, we found an inconsistent hypothesis
+predicate4 (m,p,j,a,c) = if j == 1 && (m == 1 || p == 1) then False else True
+
+-- We can find the remaining plausible Hypotheses by using the above predicates
+-- as filters over our search space (the truthOptions array). If we are left
+-- with a singleton list, we have done our job.
+appliedFilters = filter predicate4 $ filter predicate3 $
+        filter predicate2 $ filter predicate1 truthOptions
+
+-- honest takes the head of the applied filters and translates the values
+-- of each integer into a list of honest boys. 
+honest :: [Boy]
+honest = 
+    let (m,p,j,a,c) = head appliedFilters
+        x1 = if m == 1 then [Matthew] else []
+        x2 = if p == 1 then [Peter]   else []
+        x3 = if j == 1 then [Jack]    else []
+        x4 = if a == 1 then [Arnold]  else []
+        x5 = if c == 1 then [Carl]    else []
+    in x1 ++ x2 ++ x3 ++ x4 ++ x5
+
+guilty :: [Boy]
+guilty = 
+    -- I only care about the truthfulness of Michael and Peter because
+    -- only their statements influence the outcome of this function
+    let (m',p',_,_,_) = head appliedFilters
+        m = m' == 1
+        p = p' == 1
+    in  if m && p then [Jack] 
+        else if m && (not p) then [Arnold, Peter]
+            else if (not m) && p then [Matthew]
+                else [Carl]
+
+
 
 -- ===============
 -- === EULER 9 ===
@@ -221,13 +286,13 @@ sieve :: [Int] -> [Int]
 sieve [] = []
 sieve (n:ns) = n : sieve (filter (\m -> rem m n /= 0) ns)
 
-sumOfTwoMilPrimes :: Int
-sumOfTwoMilPrimes = sumOfTwoMilPrimes' (sieve (2:[3,5..])) 0
+sumOfTwoMilPrimes :: Int -> Int
+sumOfTwoMilPrimes n = sumOfTwoMilPrimes' (sieve (2:[3,5..])) 0 n
 
-sumOfTwoMilPrimes' :: [Int] -> Int -> Int
-sumOfTwoMilPrimes' (x:xs) n = 
-    if x >= 2000000 then n
-        else sumOfTwoMilPrimes' xs n+x
+sumOfTwoMilPrimes' :: [Int] -> Int -> Int-> Int
+sumOfTwoMilPrimes' (x:xs) n m = 
+    if x >= m then n
+        else sumOfTwoMilPrimes' xs (n+x) m
 
 -- ================
 -- === EULER 49 ===
@@ -235,8 +300,13 @@ sumOfTwoMilPrimes' (x:xs) n =
 permutation :: Int -> Int -> Bool
 permutation x y = listToInt (sort (intToList x)) == listToInt (sort (intToList y))
 
-seqPermPrimes :: (Int, Int, Int)
-seqPermPrimes = head (tail [(x,y,z) |  x <- [1001,1003..9999], 
+seqPermPrimes :: Int
+seqPermPrimes = 
+    let (x,y,z) = seqPermPrimes'
+    in read ((show x) ++ (show y) ++ (show z))
+
+seqPermPrimes' :: (Int, Int, Int)
+seqPermPrimes' = head (tail [(x,y,z) |  x <- [1001,1003..9999], 
                             prime x,
                             y <- [x+2 .. 9999],
                             prime y,
@@ -245,3 +315,4 @@ seqPermPrimes = head (tail [(x,y,z) |  x <- [1001,1003..9999],
                             prime z,
                             permutation x y,
                             permutation y z])
+-- => 296962999629
