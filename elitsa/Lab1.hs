@@ -38,13 +38,13 @@ primes = 2 : filter prime [3,5..]
 
 consPrimes :: Int -> Int
 consPrimes n = sum (cPrimes n primes) -- sum the first consecutive numbers found  
-		
+        
 
 cPrimes:: Int -> [Int] -> [Int]
 cPrimes x primeList = 
-		  if prime(sum(take x primeList)) -- checks if the sum of x elements is prime
-		  then (take x primeList) -- returns the consecutive numbers, which sum is prime 
-		  else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
+          if prime(sum(take x primeList)) -- checks if the sum of x elements is prime
+          then (take x primeList) -- returns the consecutive numbers, which sum is prime 
+          else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
 
 
 -- Task 7
@@ -63,7 +63,7 @@ getOddOnes [] = [] --
 getOddOnes (x:[]) = [] 
 getOddOnes x =  last(x) : getEvenOnes(init(x))
 
-	
+    
 sumIfMoreThan10 :: [Int] -> [Int]
 sumIfMoreThan10 [] = []
 sumIfMoreThan10 (x:xs) = 
@@ -72,7 +72,13 @@ sumIfMoreThan10 (x:xs) =
         else x : (sumIfMoreThan10 xs)
 
 doubleList:: [Int] -> [Int] 
-doubleList xs = [x*2 | x <-xs]                   
+doubleList xs = [x*2 | x <-xs]   
+
+listToInt:: [Int] -> Int
+listToInt [] = 0
+listToInt  x  = 
+              let currEl = head x * (10^(length x - 1))
+              in listToInt(tail(x)) + currEl          
 
 luhn:: Int -> Bool
 luhn x = 
@@ -85,3 +91,20 @@ luhn x =
       in  mod product 10 == 0
 
 
+isVisa:: Int-> Bool
+isVisa x =
+       let cardNumberList = intToList x
+       in luhn(x) && (head cardNumberList) == 4 && (length cardNumberList == 13 || length cardNumberList == 16 || length cardNumberList == 19) 
+
+isMasterCard:: Int -> Bool
+isMasterCard x =
+       let cardNumberList = intToList x  
+           firsTwoNumbers = head cardNumberList * 10 + head(tail(cardNumberList))
+           firtsSixNumbers = listToInt(take 6 cardNumberList)
+       in luhn(x) && (length cardNumberList == 16) && (elem firsTwoNumbers [51..55] || (firtsSixNumbers >= 222100 || firtsSixNumbers <= 272099))
+
+isAmercanExpress:: Int-> Bool
+isAmercanExpress x =
+       let cardNumberList = intToList x
+           firsTwoNumbers = head cardNumberList * 10 + head(tail(cardNumberList))
+        in luhn(x) && (length cardNumberList == 15) && (firsTwoNumbers == 34 || firsTwoNumbers == 37)
