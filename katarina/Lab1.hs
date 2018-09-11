@@ -69,17 +69,50 @@ formularForListsHolds n = sizeOfPowerSet(abs n) == sizeOfPowerSet' (abs n)
 
 -- Exercise 4
 
-first1000Primes = filter prime [1..999]
+first1000Primes = filter prime [1..9999]
 isPrimeAndReversalPrime n = prime n && prime (reversal n)
 
 first1000ReversalPrimes = filter isPrimeAndReversalPrime first1000Primes
 first1000ReversalPrimes' = filter (\x -> prime x && prime (reversal x)) first1000Primes
 
---And in one line:
-first1000ReversalPrimes'' = filter (\x -> prime x && prime (reversal x)) [1..999]
-
+   --And in one line:
+first1000ReversalPrimes'' = filter (\x -> prime x && prime (reversal x)) [1..9999]
+   -- how to test: is every number a prime? And is the reversal in our list?
 
 
 
 ---Exercise 5
 
+consecutivePrimes101 n = sum (take 101 $ filter (\x -> x>=n) primes)
+
+
+resultEx5 = take 1 $ filter prime (consecutivePrimes101 primes)
+
+
+
+
+-- Exercise 7
+
+digits :: Integer -> [Int]
+digits n = map (\x -> read [x] :: Int) (show n) --n is number of credit card, digits returns [1,2,3,4]
+
+lastDigit creditcardNumber = last (digits creditcardNumber)
+
+reverseList [] = []
+reverseList (x:xs) = reverseList xs ++ [x]
+
+second (x:y:xs) = y : second xs
+second _ = []
+
+first (x:y:xs) = x:first xs
+first (x:[]) = [x]
+first [] = []
+
+multiplyEveryoneByTwo :: [Int] -> [Int]
+multiplyEveryoneByTwo [] = []
+multiplyEveryoneByTwo (x:xs) = luhnDouble x : multiplyEveryoneByTwo xs
+
+luhnDouble x = if((x*2) > 9) then ((x*2)-9) else (x*2)
+
+luhnSum creditcardNumber = sum $ multiplyEveryoneByTwo(second(reverseList(digits creditcardNumber))) ++ first(reverseList(digits creditcardNumber))-- todo: flip around, split, double every second, sum up
+luhnCorrect creditcardNumber = (luhnSum creditcardNumber) `mod` 10 == 0
