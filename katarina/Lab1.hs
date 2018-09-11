@@ -85,8 +85,7 @@ first1000ReversalPrimes'' = filter (\x -> prime x && prime (reversal x)) [1..999
 
 consecutivePrimes101 n = sum (take 101 $ filter (\x -> x>=n) primes)
 
-
-resultEx5 = take 1 $ filter prime (consecutivePrimes101 primes)
+resultEx5 = head $ filter prime (map consecutivePrimes101 [1..])
 
 
 
