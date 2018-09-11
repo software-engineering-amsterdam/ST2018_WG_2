@@ -358,14 +358,20 @@ guilty =
 -- ===============
 -- === EULER 9 ===
 -- ===============
+-- generator for all pythagorean triplets, we assume the values of a, b, and c 
+-- won't be over 500 so we don't make the search space any bigger
 pythTrips :: [(Int, Int, Int)]
 pythTrips = [(x,y,z) | x <- [1..500], y <- [x..500], z <- [y..500], x^2 + y^2 == z^2]
 
+-- ask the actual function to find the special pythagorean triplet in the
+-- list pythTrips, return the productt of this triplet on success
 specPythTripProd :: Int
 specPythTripProd = 
     let (a,b,c) = specPythTrip' pythTrips
     in a*b*c
 
+-- check the head of the list for being the correct triplet, search the tail if
+-- we need to keep looking. Otherwise, return the triplet in tuple form.
 specPythTrip' :: [(Int, Int, Int)] -> (Int, Int, Int)
 specPythTrip' ((a,b,c):xs) = if a + b + c == 1000
     then (a,b,c) else specPythTrip' xs
@@ -373,13 +379,19 @@ specPythTrip' ((a,b,c):xs) = if a + b + c == 1000
 -- ================
 -- === EULER 10 ===
 -- ================
+-- define the sieve as described in the lab slides
 sieve :: [Int] -> [Int]
 sieve [] = []
 sieve (n:ns) = n : sieve (filter (\m -> rem m n /= 0) ns)
 
+-- Ask the actual function for the sum of all primes lower than n.
+-- Pass the sieve and an accumulator with value 0 as starting params.
 sumOfTwoMilPrimes :: Int -> Int
 sumOfTwoMilPrimes n = sumOfTwoMilPrimes' (sieve (2:[3,5..])) 0 n
 
+-- take the head of the primes list, the current accumulator, and the max value
+-- of the primes. If the next prime is higher than max, we already have our total.
+-- If not, add the current prime to the accumulator and keep looking in the tail.
 sumOfTwoMilPrimes' :: [Int] -> Int -> Int-> Int
 sumOfTwoMilPrimes' (x:xs) n m = 
     if x >= m then n
@@ -388,18 +400,29 @@ sumOfTwoMilPrimes' (x:xs) n m =
 -- ================
 -- === EULER 49 ===
 -- ================
+-- Helper function to check if two ints are permutations of each other. This is
+-- done by converting the Int to a list, sorting it, and converting to an Int again.
+-- This way, only permutations will match
 permutation :: Int -> Int -> Bool
 permutation x y = listToInt (sort (intToList x)) == listToInt (sort (intToList y))
 
+-- ask the actual function to find the prime triplet, return the appended string
+-- forms of these Integers after recasting them to an Int using read.
 seqPermPrimes :: Int
 seqPermPrimes = 
     let (x,y,z) = seqPermPrimes'
     in read ((show x) ++ (show y) ++ (show z))
 
+-- return the head of the tail of the list containing tuples (x,y,z), where:
+-- x is an uneven number between 1001 and 9999, x is prime, y is an uneven number
+-- between x+2 and 9999, y is prime, z is y + the difference between y and x,
+-- z is smaller than 10000, z is prime, and x, y, and z are permutations of each
+-- other. We take the head of the tail so that we don't get the example solution
+-- as a return value.
 seqPermPrimes' :: (Int, Int, Int)
 seqPermPrimes' = head (tail [(x,y,z) |  x <- [1001,1003..9999], 
                             prime x,
-                            y <- [x+2 .. 9999],
+                            y <- [x+2,x+4 .. 9999],
                             prime y,
                             let z = y + (y-x),
                             z < 10000, 
