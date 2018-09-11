@@ -90,22 +90,52 @@ powerLengthTest n' =
 -- =========
 -- === 3 === 1.5 h
 -- =========
+-- helper function that counts all of the instances of a given
+-- Int inside a given list
 count :: Int -> [Int] -> Int
 count x = length . filter (==x)
 
+-- helper function, recursively computes the factorial of an Int
 fact :: Int -> Int
 fact 0 = 1
 fact n = n * fact(n-1)
 
+-- The idea here is to use this formula: The amount of permutations of
+-- a list is the factorial of the length of that list divided by the factorials
+-- of the numbers of instances of each item in the list, all multiplied
+-- together. Explanation and proof can be found at:
+--     https://math.stackexchange.com/questions/119044/what-is-the-proof-of-permutations-of-similar-objects
+
+-- The amount of possible permutations equals the factorial of the length of the list
+-- over the instanceCounts factorialed together, calculated by instanceFact. The
+-- division of these two values gives us our answer.
 permCalc :: [Int] -> Int
 permCalc l = quot (fact (length l)) (instanceFact l)
 
+-- The instanceFact function takes a list of ints and converts them into a list
+-- of Ints denoting how many times each of these ints occurred in the original
+-- list. The result is then the product of all of the factorials of this list.
+-- the list of instanceCounts is returned by the instanceCount function, this
+-- helper function only applies a factorial function to each list element
+-- and multiplies them all together using the fold function.
 instanceFact :: [Int] -> Int
 instanceFact l = foldl (*) 1 (map (\x -> fact(x)) (instanceCount l))
 
+-- instanceCount converts a ist of integers into a list denoting how many times
+-- each item occurred in that list. for instance, the list [1,1,1,1,2,3,3,5,5,5]
+-- will be converted into [4,1,2,3] (four ones, one two, two threes, and three
+-- fives). It does this by starting a recursive chain with an empty list as 
+-- starting argument.
 instanceCount :: [Int] -> [Int]
 instanceCount l = instanceCount' [] l
 
+-- instanceCount' starts out by taking the current counts and instances lists,
+-- and stores the instance that is to be counted in this instance. It then
+-- stores the count in the thisInstanceCount variable and appends it to nextCounts.
+-- Finally, it filters all instances of this number from the instances list.
+-- This way, the counts list accumulates all the different instanceCounts and
+-- the insatnces list eventually empties. Once it is empty, the counts array
+-- contains the function its return value.
 instanceCount' :: [Int] -> [Int] -> [Int]
 instanceCount' l [] = l
 instanceCount' counts instances = 
@@ -115,12 +145,24 @@ instanceCount' counts instances =
         nextInstances = filter (/=thisInstance) instances
     in instanceCount' nextCounts nextInstances
 
+-- helper permutations function. This does generate a lot of duplicates.
 perms :: Eq a => [a] -> [[a]]
 perms [] = [[]]
 perms (x:xs) = concat (map (insrt x) (perms xs)) where
     insrt x [] = [[x]]
     insrt x (y:ys) = (x:y:ys) : map (y:) (insrt x ys)
 
+-- various test functions, testPermCalc tests all in one go.
+testPermCalc1 = 
+    let testList = [1,1,1,2,3,3,3,4]
+        in permCalc testList == (length $ rmDups $ perms testList)
+testPermCalc2 = 
+    let testList = [1,2,3,4,5,6]
+        in permCalc testList == (length $ rmDups $ perms testList)
+testPermCalc3 = 
+    let testList = [1]
+        in permCalc testList == (length $ rmDups $ perms testList)
+testPermCalc = and [testPermCalc1, testPermCalc2, testPermCalc3]
 
 -- =========
 -- === 4 ===
