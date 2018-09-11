@@ -66,7 +66,10 @@ ex1P3Predicate n =  ex1CubeSum (abs n) == ex1CubeSum' (abs n)
 --exercise 2
 {-
 
-Give your thoughts on the following issue: when you perform the test for exercise 4, what are you testing actually? Are you checking a mathematical fact? Or are you testing whether subsequences satisfies a part of its specification? Or are you testing something else still?
+Give your thoughts on the following issue: when you perform the test for exercise 4, 
+what are you testing actually? Are you checking a mathematical fact? Or are you 
+testing whether subsequences satisfies a part of its specification? Or are you 
+testing something else still?
 
 
 Statement: |A| = n, then |superset(A)| = 2^n
@@ -74,7 +77,9 @@ Statement: |A| = n, then |superset(A)| = 2^n
 generate superset by subsets command. 
 
 
-Answer: In Haskell we can only check lists up to a finite size limited by memory / stack etc, while formal mathematical proofs can be used to prove a statement for the entire domain (including infinite domains).
+Answer: In Haskell we can only check lists up to a finite size limited by 
+memory / stack etc, while formal mathematical proofs can be used to prove a 
+statement for the entire domain (including infinite domains).
 
 
 time: 20 minutes 
@@ -89,7 +94,7 @@ superSetLength xs = length( subsequences xs )
 ex2Property len = superSetLength ( generateSetOfLength len )
 ex2Property' len = 2 ^ len 
 
-ex2Predicate len = ex2Property len == ex2Property len
+ex2Predicate len = ex2Property len == ex2Property' len
 
 --tests:
 --quickCheck ex2Predicate

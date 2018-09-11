@@ -36,12 +36,12 @@ prime n = n > 1 && all (\ x -> rem n x /= 0) xs
 primes :: [Int]
 primes = 2 : filter prime [3,5..] 
 
-consPrimes :: Int -> Int
-consPrimes n = sum (cPrimes n primes) -- sum the first consecutive numbers found  
+consecPrimes :: Int -> Int
+consecPrimes n = sum (consecPrimes' n primes) -- sum the first consecutive numbers found  
         
 
-cPrimes:: Int -> [Int] -> [Int]
-cPrimes x primeList = 
+consecPrimes' :: Int -> [Int] -> [Int]
+consecPrimes' x primeList = 
           if prime(sum(take x primeList)) -- checks if the sum of x elements is prime
           then (take x primeList) -- returns the consecutive numbers, which sum is prime 
           else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
