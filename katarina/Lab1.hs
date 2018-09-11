@@ -50,3 +50,11 @@ checkSumPot3 n = sumPot3 (abs n) == sumPot3' (abs n)
 
 
 -- Excercise 2
+
+sizeOfPowerSet n = length (subsequences [1..n])
+sizeOfPowerSet' n = 2^n
+
+formularForListsHolds n = sizeOfPowerSet(abs n) == sizeOfPowerSet' (abs n)
+
+-- This formular is hard to test, because it should hold for every number that is greater than 0. It is not possible to check this statement for an infinite number of numbers in a finite time.
+-- Quick Check only puts some numbers and checks if it is right, not a proof.
