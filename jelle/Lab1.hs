@@ -30,7 +30,7 @@ data Boy = Matthew | Peter | Jack | Arnold | Carl
 boys = [Matthew, Peter, Jack, Arnold, Carl]
 
 -- =========
--- === 1 ===
+-- === 1 === 30 min
 -- =========
 
 -- quadSum definition, using quot because the / operator
@@ -53,11 +53,25 @@ quadSumTest x = quadSum (abs x) == quadSum' (abs x)
 tripSumTest y = tripSum (abs y) == tripSum' (abs y)
 
 -- =========
--- === 2 ===
+-- === 2 === 20 min
 -- =========
+powerLength :: Int -> Int
+powerLength n = length (subsequences [1..n])
+
+powerLength' :: Int-> Int
+powerLength' n = 2^n
+
+-- helperfunction to reduce the test numbers to a handleable order of mgnitude
+letsNotOverDoIt :: Int -> Int
+letsNotOverDoIt n = (abs n) `mod` 20
+
+-- quickCheck test definition
+powerLengthTest n' = 
+    let n = letsNotOverDoIt n'
+    in  powerLength n == powerLength' n
 
 -- =========
--- === 3 ===
+-- === 3 === 1.5 h
 -- =========
 count :: Int -> [Int] -> Int
 count x = length . filter (==x)
@@ -94,16 +108,23 @@ perms (x:xs) = concat (map (insrt x) (perms xs)) where
 -- =========
 -- === 4 ===
 -- =========
+-- The revPrimes function filters the list of all odd numbers lower than 10000
+-- by only selecting the numbers that are both prime and its reversal is also
+-- prime. Not efficient, but readable and works.
 revPrimes :: [Int]
-revPrimes = filter (\x -> (prime x) && (prime (reversal x))) [1..10000]
+revPrimes = filter (\x -> (prime x)  && (prime (reversal x))) (2:[3,5..9999])
 
 -- =========
 -- === 5 ===
 -- =========
-
+-- start recursion by taking the primelist and pass it as a parameter
 consPrimes :: Int -> [Int]
 consPrimes n = consPrimes' n primes
 
+-- construct a list of primes that are the sum of n consecutive primes by taking
+-- the first n primes in the current list and append it to the results if it is
+-- prime. Either way, the rest of the result is the same function applied to the
+-- tail of the primelist.
 consPrimes' :: Int -> [Int] -> [Int]
 consPrimes' n primeList = 
     if prime (sum (take n primeList))
@@ -111,11 +132,16 @@ consPrimes' n primeList =
         else consPrimes' n (tail primeList)
 
 -- =========
--- === 6 ===
+-- === 6 === 45 min
 -- =========
+-- start the search at taking 1 consecutive prime
 conjCounter :: [Int]
 conjCounter = conjCounter' 1
 
+-- if the multiplication of the first n consecutive primes plus one => foldr (*)
+-- 1 (take n primes) is not prime, we have found a counterexample. Append it to
+-- the list if so. In either case keep looking for the next n by starting a new
+-- iteration with n+1 as argument.
 conjCounter' :: Int -> [Int]
 conjCounter' n =
     if (not (prime ((foldr (*) 1 (take n primes)) + 1)))
@@ -123,8 +149,11 @@ conjCounter' n =
         else conjCounter' (n+1)
 
 -- =========
--- === 7 ===
+-- === 7 === 1 hour
 -- =========
+
+-- helper functions intToList and listToInt. these functions are each other's 
+-- inversions. 
 intToList :: Int -> [Int]
 intToList 0 = []
 intToList n = (intToList (quot n 10)) ++ [mod n 10]
@@ -134,13 +163,17 @@ listToInt [] = 0
 listToInt l = 
     (last l) + 10 * listToInt (init l)
 
-
+-- odds takes a list of integers and a boolean, and returns all of the odd
+-- positions, counted from the back of the list if the boolean is True. If
+-- False, it returns all of the even items in the list.
 odds :: [Int] -> Bool -> [Int]
 odds [] _ = []
 odds list thisOne = if thisOne
     then last list : odds (init list) False
     else odds (init list) True
 
+-- specialdouble doubles all the values in a list, if the doubled value s higher
+-- than 9, it instead computes the sum of the doubled values digits.
 specialDouble :: [Int] -> [Int]
 specialDouble [] = []
 specialDouble (x:xs) = 
@@ -148,6 +181,10 @@ specialDouble (x:xs) =
         then (x+x-9) : (specialDouble xs)
         else (x+x) : (specialDouble xs)
 
+-- The luhn function converts the given integer to a list of integers, gets the
+-- odd numbered values and the even numbered ones, specialDoubles the odd values
+-- and computes the sum of all the results. If this number mod 10 is equal to
+-- zero, we have found a valid Luhn number.
 luhn :: Int -> Bool
 luhn n = 
     let nList = intToList n 
@@ -157,6 +194,10 @@ luhn n =
     in if mod total 10 == 0
         then True else False
 
+-- The america express test converts the first two items of the list form of the
+-- given int into an integer for easy comparison, we have to check if the length
+-- of the list is equal to 15 and whether the first two digits match 34 or 47.
+-- If all this is the case, we have a match if the luhn is also valid.
 isAmericanExpress :: Int -> Bool
 isAmericanExpress n = 
     let l = intToList n
@@ -166,6 +207,10 @@ isAmericanExpress n =
         (firstTwo == 34 || firstTwo == 37) &&
         (luhn n) then True else False
 
+-- same as above, only this time we also take the first six digits of the int
+-- to check if they are with in the range [222100,272099], or the first two
+-- digits are within the range [51,55]. If this is true and the luhn function
+-- returns true, we have a match.
 isMaster :: Int -> Bool
 isMaster n =
     let l = intToList n
@@ -177,6 +222,9 @@ isMaster n =
             (elem firstTwo [51..55])) &&
         (luhn n) then True else False
 
+-- isVisa checks for a valid length, checks if the first digit is equal to 4,
+-- and checks with the luhn function for vailidity. If everything checks out,
+-- we have a match.
 isVisa :: Int -> Bool
 isVisa n = 
     if  (elem (length (intToList n)) [13,16,19]) &&
@@ -184,7 +232,7 @@ isVisa n =
         (luhn n) then True else False
 
 -- =========
--- === 8 ===
+-- === 8 === 3 hours
 -- =========
 
 -- Our approach is to construct a search space of all possible world states.
