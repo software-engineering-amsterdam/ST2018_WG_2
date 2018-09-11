@@ -30,7 +30,7 @@ boys = [Matthew, Peter, Jack, Arnold, Carl]
 --Katarina Lang--
 -------------------------------------------------------------------------------------------
 
--- Excercise 1
+-- Exercise 1
 
     -- Problem 2 
 
@@ -40,7 +40,7 @@ sumPot2' n = quot (n*(n+1)*(2*n+1)) 6
 checkSumPot2 n = sumPot2 (abs n) == sumPot2' (abs n)
     -- abs because the statements only holds for natural numbers
  
-   --Excercise 3
+   --Problem 3
 
 sumPot3 n = sum (map (\x -> x^3) [1..n])
 sumPot3' n = (quot (n*(n+1)) 2)^2
@@ -49,7 +49,7 @@ checkSumPot3 n = sumPot3 (abs n) == sumPot3' (abs n)
 
 
 
--- Excercise 2
+-- Exercise 2
 
 sizeOfPowerSet n = length (subsequences [1..n])
 sizeOfPowerSet' n = 2^n
@@ -58,3 +58,28 @@ formularForListsHolds n = sizeOfPowerSet(abs n) == sizeOfPowerSet' (abs n)
 
 -- This formular is hard to test, because it should hold for every number that is greater than 0. It is not possible to check this statement for an infinite number of numbers in a finite time.
 -- Quick Check only puts some numbers and checks if it is right, not a proof.
+
+
+
+
+-- Exercise 3
+
+
+
+
+-- Exercise 4
+
+first1000Primes = filter prime [1..999]
+isPrimeAndReversalPrime n = prime n && prime (reversal n)
+
+first1000ReversalPrimes = filter isPrimeAndReversalPrime first1000Primes
+first1000ReversalPrimes' = filter (\x -> prime x && prime (reversal x)) first1000Primes
+
+--And in one line:
+first1000ReversalPrimes'' = filter (\x -> prime x && prime (reversal x)) [1..999]
+
+
+
+
+---Exercise 5
+
