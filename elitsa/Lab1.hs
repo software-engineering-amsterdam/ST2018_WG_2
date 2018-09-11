@@ -38,50 +38,73 @@ primes = 2 : filter prime [3,5..]
 
 consPrimes :: Int -> Int
 consPrimes n = sum (cPrimes n primes) -- sum the first consecutive numbers found  
-		
+        
 
 cPrimes:: Int -> [Int] -> [Int]
 cPrimes x primeList = 
-		  if prime(sum(take x primeList)) -- checks if the sum of x elements is prime
-		  then (take x primeList) -- returns the consecutive numbers, which sum is prime 
-		  else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
+          if prime(sum(take x primeList)) -- checks if the sum of x elements is prime
+          then (take x primeList) -- returns the consecutive numbers, which sum is prime 
+          else cPrimes x (tail (primeList)) -- recursion with the rest of the numbers of primes
 
 
+-- Task 7
+
+intToList:: Int -> [Int]
+intToList 0 = []
+intToList x =   intToList(x `quot`  10) ++ [x `mod` 10]
+
+getEvenOnes:: [Int] -> [Int]
+getEvenOnes [] = [] -- 
+getEvenOnes (x:[]) = [] 
+getEvenOnes x =  last(init x) : getEvenOnes(init(init x))
+
+getOddOnes:: [Int] -> [Int]
+getOddOnes [] = [] -- 
+getOddOnes (x:[]) = [] 
+getOddOnes x =  last(x) : getEvenOnes(init(x))
+
+    
+sumIfMoreThan10 :: [Int] -> [Int]
+sumIfMoreThan10 [] = []
+sumIfMoreThan10 (x:xs) = 
+    if x > 9  
+        then (x - 9) : (sumIfMoreThan10 xs)
+        else x : (sumIfMoreThan10 xs)
+
+doubleList:: [Int] -> [Int] 
+doubleList xs = [x*2 | x <-xs]   
+
+listToInt:: [Int] -> Int
+listToInt [] = 0
+listToInt  x  = 
+              let currEl = head x * (10^(length x - 1))
+              in listToInt(tail(x)) + currEl          
+
+luhn:: Int -> Bool
+luhn x = 
+      let cardNumberList = intToList x
+          oddOnes = getOddOnes cardNumberList
+          evenOnes = getEvenOnes cardNumberList
+          doubleEvens = doubleList evenOnes
+          summEvens = sumIfMoreThan10 doubleEvens
+          product = sum(summEvens) + sum(oddOnes)
+      in  mod product 10 == 0
 
 
+isVisa:: Int-> Bool
+isVisa x =
+       let cardNumberList = intToList x
+       in luhn(x) && (head cardNumberList) == 4 && (length cardNumberList == 13 || length cardNumberList == 16 || length cardNumberList == 19) 
 
--- if sum take 3 prime -> return the numbers
--- else sum take
+isMasterCard:: Int -> Bool
+isMasterCard x =
+       let cardNumberList = intToList x  
+           firsTwoNumbers = head cardNumberList * 10 + head(tail(cardNumberList))
+           firtsSixNumbers = listToInt(take 6 cardNumberList)
+       in luhn(x) && (length cardNumberList == 16) && (elem firsTwoNumbers [51..55] || (firtsSixNumbers >= 222100 || firtsSixNumbers <= 272099))
 
--- intToList:: Int -> [Int]
--- intToList 0 = []
--- intToList x = intToList(quot x 10) ++ [mod x 10] 
-
--- odds:: [Int] -> [Int]
--- odds xs = [x | x <- xs, odd x]
-
--- specialDouble:: Int -> Int
--- specialDouble x = x
--- sumIfMoreThan10:: [Int] -> [Int]
--- sumIfMoreThan10 xs = 
-		
-
-
---luhn :: Int -> Bool
-
-
-
--- consPrimes :: Int -> [Int]
--- consPrimes n = consPrimes' n primes
-
--- consPrimes' :: Int -> [Int] -> [Int]
--- consPrimes' n primeList = 
---     if prime (sum (take n primeList))
---         then sum (take n primeList) : consPrimes' n (tail primeList)
---         else consPrimes' n (tail primeList)
-
--- bmiTell:: a -> a -> String
--- bmiTell weight height 
--- 		| weight /height <= 18.5 = "You are"
--- 		| otherwise              =
-
+isAmercanExpress:: Int-> Bool
+isAmercanExpress x =
+       let cardNumberList = intToList x
+           firsTwoNumbers = head cardNumberList * 10 + head(tail(cardNumberList))
+        in luhn(x) && (length cardNumberList == 15) && (firsTwoNumbers == 34 || firsTwoNumbers == 37)
