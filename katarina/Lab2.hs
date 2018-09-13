@@ -26,10 +26,7 @@ data Shape = NoTriangle | Equilateral
 
 
 -- Exercise 1 Are the numbers generated randomly?
---areInTheFirstQuarter :: 
-randomNumbers n = probs n
-
-areInTheFirstQuartile = filter (\x -> x < 0.25 && x>0) 
+--Martin has the solution, try it by myself at home
 
 
 
