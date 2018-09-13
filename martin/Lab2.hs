@@ -29,15 +29,48 @@ forall :: [a] -> (a -> Bool) -> Bool
 forall = flip all
 
 
+
+-- ====== 1 ======== 1:36 h
+
+freqDistCount list = let 
+    q1 = length $ filter (\x -> x > 0 && x < 0.25) list
+    q2 = length $ filter (\x -> x >= 0.25 && x < 0.50) list
+    q3 = length $ filter (\x -> x >= 0.5 && x < 0.75) list
+    q4 = length $ filter (\x -> x >= 0.75 && x < 1) list
+    in (q1,q2,q3,q4)
+
+
+freqDistPerc (a,b,c,d) = let sum = a+b+c+d
+                        in (cDiv a sum, cDiv b sum, cDiv c sum, cDiv d sum)
+
+cDiv a b = (fromIntegral a) / (fromIntegral b)
+
+middlePoint = 0.25
+tolerance = 0.01
+
+isEvenlyDistributed (a,b,c,d) =  bounded a && bounded b && bounded c && bounded d
+
+bounded x = inRange x (middlePoint - tolerance) (middlePoint + tolerance)
+inRange value min max = value >= min && value <= max
+
+
+testEvenDistributionGenerator = do
+        x <- probs 10000
+        return (isEvenlyDistributed $ freqDistPerc $ freqDistCount x)
+
+
+--TODO: how to test with quickcheck
+
+--probs 10000 >>= (\x -> return freqDist x)
+
+
 -- ========= 3 =======
 
-{-
-data NamedProperty = NamedProperty (String, Int -> Bool)
-instance Show NamedProperty where show (NamedProperty name _ ) = show name
-instance Eq NamedProperty where 
-	(NamedProperty nameL _) == (NamedProperty nameR _) = nameL == nameR
+--data NamedProperty = NamedProperty (String, Int -> Bool)
+--instance Show NamedPropertyX where show (NamedProperty name _ ) = show name
+--instance Eq NamedProperty where 
+--  (NamedPropertyX nameL _) == (NamedPropertyX nameR _) = nameL == nameR
 
--}
 
 
 stronger, weaker :: [a] -> (a -> Bool) -> (a -> Bool) -> Bool
@@ -90,7 +123,7 @@ property3_4b = (\ x -> (even x && x > 3) || even x)
 propertyList = [property3_1a, property3_1b, property3_2a, property3_2b, property3_3a, property3_3b, property3_4a, property3_4b]
 
 
-weaknessCompare l r = (weaker domain l r) || ((weaker domain l r) && (stronger domain l r))
+weaknessCompare l r = (stronger domain l r) || ((weaker domain l r) && (stronger domain l r))
 
 
 domain = [-10..10]
@@ -123,7 +156,7 @@ everyElementOfBInA a b = everyElementOfAInB b a
 permutationTest a b = equalLength a b && everyElementOfAInB a b && everyElementOfBInA a b
 
 
--- 	permutationTest' = permutationTest [1,2,3] [3,2,1] && permutationTest []
+--  permutationTest' = permutationTest [1,2,3] [3,2,1] && permutationTest []
 --  ([a], [a])
 
 
