@@ -30,7 +30,7 @@ data Boy = Matthew | Peter | Jack | Arnold | Carl
 boys = [Matthew, Peter, Jack, Arnold, Carl]
 
 -- =========
--- === 1 === 30 min
+-- === 1 === 60 min
 -- =========
 
 -- quadSum definition, using quot because the / operator
@@ -59,7 +59,7 @@ tripSumTest y = tripSum (abs y) == tripSum' (abs y)
 -- quickCheck tripSumTest
 
 -- =========
--- === 2 === 20 min
+-- === 2 === 50 min
 -- =========
 
 {- 
@@ -88,7 +88,7 @@ powerLengthTest n' =
     in  powerLength n == powerLength' n
 
 -- =========
--- === 3 === 1.5 h
+-- === 3 === 2.5 h
 -- =========
 -- helper function that counts all of the instances of a given
 -- Int inside a given list
@@ -165,7 +165,7 @@ testPermCalc3 =
 testPermCalc = and [testPermCalc1, testPermCalc2, testPermCalc3]
 
 -- =========
--- === 4 ===
+-- === 4 === 1.5 h
 -- =========
 -- The revPrimes function filters the list of all odd numbers lower than 10000
 -- by only selecting the numbers that are both prime and its reversal is also
@@ -179,7 +179,7 @@ revPrimes = filter (\x -> (prime x)  && (prime $ reversal x)) (2:[3,5..9999])
 -- lot lower than the probability that both definitions are right.
 
 -- =========
--- === 5 ===
+-- === 5 === 2.0 h
 -- =========
 consecPrimes :: Int -> Int
 consecPrimes n = sum (consecPrimes' n primes) -- sum the first consecutive numbers found  
@@ -195,7 +195,7 @@ consecPrimeTest1 = consecPrimes 101 == 37447
 consecPrimeTest2 = consecPrimes 5 == 101
 
 -- =========
--- === 6 === 45 min
+-- === 6 === 1.2 h
 -- =========
 -- start the search at taking 1 consecutive prime
 conjCounter :: [Int]
@@ -217,7 +217,7 @@ conjCounter' n =
 solution6 = head conjCounter -- => 30031
 
 -- =========
--- === 7 === 1 hour
+-- === 7 === 2.5 hour
 -- =========
 
 -- helper functions intToList and listToInt. these functions are each other's 
@@ -309,7 +309,7 @@ testMasterCard = and (map isMaster masterCard)
 testLuhn = and (map luhn (visa ++ masterCard ++ mx))
 
 -- =========
--- === 8 === 3 hours
+-- === 8 === 5 hours
 -- =========
 
 -- Our approach is to construct a search space of all possible world states.
