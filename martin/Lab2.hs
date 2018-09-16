@@ -29,7 +29,7 @@ forall = flip all
 
 
 
--- ====== 1 ======== 1:36 h
+-- ====== 1 ======== 3:00 h
 
 freqDistCount list = let 
     q1 = length $ filter (\x -> x > 0 && x < 0.25) list
@@ -48,6 +48,7 @@ middlePoint, toleranceP :: Double
 middlePoint = 0.25
 toleranceP = 0.01
 
+isEvenlyDistributed :: (Double,Double,Double,Double) -> Bool
 isEvenlyDistributed (a,b,c,d) =  bounded a && bounded b && bounded c && bounded d
 
 bounded :: Double -> Bool
@@ -58,35 +59,56 @@ inRange value min max = value >= min && value <= max
 
 
 testEvenDistributionGenerator = do
+        print "Testing for even distribution in RNG"
         x <- probs 10000
         return (isEvenlyDistributed $ freqDistPerc $ freqDistCount x)
 
-
---TODO: how to test with quickcheck
-
---probs 10000 >>= (\x -> return freqDist x)
 
 -- ========== 2 =========
 
 data Shape = NoTriangle | Equilateral 
            | Isosceles  | Rectangular | Other deriving (Eq,Show)
 
+triangles = [Equilateral, Isosceles, Rectangular, Other]
+           
 triangle :: Integer -> Integer -> Integer -> Shape
 triangle x y z = let [a,b,c] = sort [x,y,z] in triangleHelper a b c
 
+--True if 3 numbers satisfy the triangle inequality property, False otherwise
+triangleInequalityProperty :: Integer -> Integer -> Integer -> Bool
+triangleInequalityProperty a b c = abs (a-b) < c && c < a + b && a > 0 && b > 0 && c > 0 
+--https://en.wikipedia.org/wiki/Triangle_inequality
 
 triangleHelper :: Integer -> Integer -> Integer -> Shape
 triangleHelper x y z 
-    | (x + y < z) = NoTriangle  -- triangle property: z <= x + y, this is the inverse
+    | not $ triangleInequalityProperty x y z = NoTriangle
     | (x == y && x == z) = Equilateral
-    | (x*x + y *y == z*z) = Rectangular
+    | (x^2 + y^2 == z^2) = Rectangular
     | (x == y || x == z || y == z) = Isosceles
     | otherwise = Other
     
+
     
+triangleTestCases :: [([Integer], Shape)]
+triangleTestCases = [
+    ([3,4,5], Rectangular),
+    ([0,1,2], NoTriangle),
+    ([5,5,5],Equilateral),
+    ([5,5,7],Isosceles),
+    ([5,4,8],Other),
+    ([-1,5,20],NoTriangle)
+    ]
+    
+
+triangleTestCaseVerifier = map (\([a,b,c],expected) -> triangle a b c == expected) triangleTestCases
+
+
+triangleChecker = do
+--    quickCheckResult(\[a,b,c] ->  triangleInequalityProperty (a::Positive Integer) (b::Integer) (c::Integer) --> ((triangle a b c) `elem` triangles))
+    print "Testing sample triangle numbers"
+    print $ and $ triangleTestCaseVerifier
+
 -- ========= 3 =======
-
-
 
 
 stronger, weaker :: [a] -> (a -> Bool) -> (a -> Bool) -> Bool
@@ -94,8 +116,7 @@ stronger xs p q = forall xs (\ x -> p x --> q x)
 weaker   xs p q = stronger xs q p 
 
 
---a) Implement all properties from the Exercise 3 from Workshop 2 as Haskell functions of type Int -> Bool. Consider a small domain like 
-
+--a) Implement all properties from the Exercise 3 from Workshop 2 as Haskell functions of type Int -> Bool. Consider a small domain like [-10..10]
 
 
 property3_1a = (\ x -> even x && x > 3) 
@@ -143,20 +164,47 @@ deleteOneOccurence (x:xs) ys  f = if x == f then (ys++xs) else deleteOneOccurenc
 
 
 --testable properties
-equalLength a b = length a == length b
-everyElementOfAInB a b = forall a (\x -> elem x b)
-everyElementOfBInA a b = everyElementOfAInB b a
+equalLengthProperty a b = length a == length b
+everyElementOfAInBProperty l r = forall l (\x -> elem x r)
+everyElementOfBInAProperty l r = everyElementOfAInBProperty r l
 
-permutationTest a b = equalLength a b && everyElementOfAInB a b && everyElementOfBInA a b
-
-
---  permutationTest' = permutationTest [1,2,3] [3,2,1] && permutationTest []
---  ([a], [a])
+permutationProperty a b = equalLengthProperty a b && everyElementOfAInBProperty a b && everyElementOfBInAProperty a b
 
 
+--permutation list modifiers to preserve or remove 'is permutation' property
 
+-- For quick check we cant use the generator for both lists to compare. We will use the generator for one list and manipulate this list to compare. Two versions swap and reverse
+swapFirst2 :: [a]->[a]
+swapFirst2 [] = []
+swapFirst2 [x] = [x]
+swapFirst2 (x:y:xs)  = y:x:(swapFirst2 xs)
+
+--custom test cases
+
+permutationTestCases :: [([Integer], [Integer], Bool)]
+permutationTestCases = [
+    ([],[], True),
+    ([1],[1], True),
+    ([1..4],[4,2,3,1], True),
+    ([1,2],[1,2], True),
+    ([1,2],[2,3], False),
+    ([1],[2], False),
+    ([1,2,3],[1,2,3,4], False)]
+
+permutationTestCaseVerifier = map (\(l,r,expected) -> (permutationProperty l r) == expected) permutationTestCases
+
+permutationQCTest = do 
+    print "Testing permutations via QC and swapping 2 elements"
+    quickCheckResult(\original -> let set = nub original in permutationProperty (set :: [Int])(swapFirst2 set) )
+    print "Testing permutations via QC and reversing list"
+    quickCheckResult(\original ->  let set = nub original in permutationProperty (set :: [Int])(reverse set) )
+    print "Testing permutations via QC and multiplying by 2, should not be permutation"
+    quickCheckResult(\original ->  let set = nub original in (length set > 1) --> permutationProperty (set :: [Int]) (map (*2) set) == False )
+    print "Testing manually selected test cases"
+    print $ and $ permutationTestCaseVerifier 
+    
 -- =========== IBAN
---time: 3:45h
+--time: 5:45h with testing
 
 
 -- helper functions intToList and listToInt. these functions are each other's inversions. 
@@ -218,12 +266,23 @@ ibanValidateModulo code = ibanCalcMod $ ibanSplitIntArray $ map ibanStringExpand
 
 validIbans = ["GB82WEST12345698765432", "AD4191688595KBCTGKHRGYZM", "AD4699137644TDVJT9TNAC33", "AE696216259205408241845", "AL92647917519CIBTHD05U2H8H40", "AL8188806789C75VBDSYFE7JT8RQ", "AT187528538777215120", "AT631500287292735316", "AZ97PSVE6C9IQE5M0JWC8CBRJ5U3", "AZ55DZQEJKL3NZJIB84I4R4AZ2JC", "BA473050619611526256", "BA847034185550629040", "BE02611834831129", "BE38993183209905", "BG78JCEO781881BML7K2AM", "BG29TKCS078680YY8507BU", "BH52MITCVLZI7EKRRMAZZ8", "BH30TPFO1RNKM195AVPRK7", "BR0554129225980945618101435AD", "BR9325178333383395936755257HZ", "BY21BTNJ74378VIB5B1J5YJBUOG7", "BY98LV728466VQ7D9HG4SCIELNRG", "CH09531981M5F3M84OOA1", "CH3747732IYLZWBIUO7F9", "CR41653976363667206472", "CR61138643870780281035", "CY77181666732W0OK9MO71FP9QFT", "CY4043032144P6VMBCP42EWZZ0GT", "CZ0500701011515222697774", "CZ8485617709412783317386", "DE75323734430247348433", "DE18474192108609592292", "DK8658772182867299", "DK9882231742486007", "DO1342GO71371595187710081568", "DO983FDU20831039568036269792", "EE474480253094078489", "EE847394446572702817", "ES4242461128115519140579", "ES3585913197271535865795", "FI6620464595369114", "FI6656044804506513", "FO2353310063109027", "FO8865860572114390", "FR484635986406YRPB7C37CNQ77", "FR673935332609I6UU9CEY7H298", "GB77QVAA92020908648058", "GB42JSIN88833697784064", "GE21PG3151300222737824", "GE31HW7147961963101845", "GI60EUJGGZ90G5502AYCYBK", "GI62KYZX248197MKNBEG2EQ", "GL3708246420445584", "GL5923657433145030", "GR783797678UQW0XVA4M906IH2G", "GR623988469QO48OEHHLHGJ795T", "GT940IG0SQVBGKLXYNQ0755MZCCL", "GT457IKHTELPTOETQW4QA5DJCB0Z", "HR5696097956129883363", "HR7900029000289927680", "HU35561014514577636317765985", "HU07675568826301397810796833", "IE82MBQF95636985890031", "IE70YAQX91756188770636", "IL061704177385884933485", "IL759658792375469613502", "IQ66OYLR002585034811165", "IQ33AQTG201448577439088", "IS534320914789017766765242", "IS744953893877888517703327", "IT41A2464674442N9UJ58MRV52F", "IT54Q8323578135V15YFILQLCQ2", "JO07HCZN1390P3CFRWO5PFKOZEFYAT", "JO04ROOB747642OUY4VVTEA8E8MF60", "KW87GMKE8596DGCY4BXEEN32TP78AS", "KW20WBZU89RIUV2KF2H295FUZQM0BZ", "KZ728674JK6WEF791XKT", "KZ474218JHQDHFKO8QZ5", "LB5587918EMU483GWSUK5HNDQ3VJ", "LB985311F4XQ0DW6JUCMG71WUC3I", "LC72XICCQJ4L4TXOYHTG7XOKW6R6IUV8", "LC53HMLCAZ05WQ8UBFBARW6AIUL89V2I", "LI57633635O1UBTORXN1W", "LI2478016OPB828VA396N", "LT367811574986624132", "LT107638589265707594", "LU55779IFGB9W9MH1N68", "LU15124SOR3J03LBVPLT", "LV63TTCXKKS6CXOR8K5ZH", "LV27SIATN7ZLFICZ6FIJ0", "MC272584403191YW3PUQ7WKEK64", "MC584147481282OU9HZ3JCLZS70", "MD88OJICR8Z560CV5Z56RLR9", "MD34YDC8NCGPGDHP1FJCLO6P", "ME04836526530797062693", "ME38193344146057837275", "MK27300SMNOTH61BR15", "MK98076F8MQNKSKMK35", "MR7581073934037132495036327", "MR9198356711796580929494537", "MT05OAKX88202ZUV686SRTDLFO3PMOX", "MT86KRMO134227SEERIMR8V7IPN9MMZ", "MU88TMNR0567672225354069719QFY", "MU02BSVW5255797069306607843JQA", "NL15SNSD1856129322", "NL09UYBL7722185460", "NO2342034237064", "NO2168330172255", "PK86JQJC912IQU6L9ZAUNHBE", "PK47QHFQID9HEV74AVAAZVYP", "PL79804386633808801328774446", "PL02479493361858307984715078", "PS87TERJ244J2R389F78COVFK2YYR", "PS72TULCEHPYY6L2X4BJVYZW2GZL9", "PT54925048712726506012121", "PT52731447700575942975818", "QA19CPNM7M6GSJ8RHK193VISJEVV1", "QA96YJPZSRVYGZDBG467C3SNR7LOC", "RO04OYZPMALS0603FQ66DDVN", "RO96VPAB2BEU4WJSMKA2YBS9", "RS85990804997303599384", "RS79691452161895520088", "SA1612FBV017RAOW0FFY6MI4", "SA7852BX0TF16FCT06WXM6QK", "SC21SKQT48397576814218878792BLT", "SC49BHPC24249659100274263645RUC", "SE1427739638040573160054", "SE3555829824039845023616", "SI85263838359592515", "SI94298882643105654", "SK4966726045742512919467", "SK6417545335470924950926", "SM55M9144704930ITBSM6VT6ODJ", "SM74I4990804171TV1CFZN664IA", "ST70025736394519337487434", "ST57928407446221033032677", "SV31BPAF67429031273059240765", "SV37BACK56369176007791803450", "TL309311665903143076228", "TL506496396787421957197", "TN9451047133855297489170", "TN8341827991659205574472", "TR4660960LJBQ0A3BTOJF8GBDH", "TR110858750WLRCLO6F5YL6B8A", "UA95465366MKXGG7M3JB2IAP12IGO", "UA76776931P09ZAM38BKZFDJ7FISO", "VG19HKUD2090704270585150", "VG09IFIZ4245377217696104", "XK522078769488135293", "XK164946249920719752"]
 
-invalidIbans = ["", "ZZZZ"]
+invalidIbansStatic = [
+    "",  --invalid length
+    "ZZZZ1234" --missing checksum
+    ] 
 
 
 --functions to transform (valid) IBAN to an invalid state for testing
+ibanTestSwapCode code p1 p2 = (p1 < length code && p2 < length code && p1 /= p2 && (code !! p1 /= code !! p2)) -->  (iban $ swapElementsAt p1 p2 code)
 
-ibanTestSwapCode code position1 position2 = 
+
+--increments first found number in IBAN, this should fail the ISO 7064 modulo check, 
+--as any more transformations are not guaranteed to be caught
+ibanIncrementSingleNumber :: String -> Int -> Int -> String
+ibanIncrementSingleNumber "" _ _ = ""
+ibanIncrementSingleNumber (x:xs) delta base = if isDigit x then (show $ mod (digitToInt x + delta) base) ++ xs  else x : ibanIncrementSingleNumber xs delta base
+
+ibanTestIncrementSingleNumber code delta = delta /= 0 -->  (iban $ ibanIncrementSingleNumber code delta 10)
 
 --source: https://stackoverflow.com/a/30551130/1663367 
 swapElementsAt :: Int -> Int -> [a] -> [a]
@@ -232,14 +291,18 @@ swapElementsAt i j xs = let elemI = xs !! i
                             left = take i xs
                             middle = take (j - i - 1) (drop (i + 1) xs)
                             right = drop (j + 1) xs
-                    in  left ++ [elemJ] ++ middle ++ [elemI] ++ right
+                        in  left ++ [elemJ] ++ middle ++ [elemI] ++ right
 ----------------------------------------
-                    
+
                     
 ibanTestCases = do 
     print "Testing valid IBANs"
     print $ and $ map iban validIbans
     print "Testing invalid IBANs"
-    print $ and $ map not (map iban invalidIbans)
-
+    print $ and $ map not (map iban invalidIbansStatic)
+    print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck number increment"
+    quickCheckResult(\delta -> (delta /= 0 && mod delta 10 /= 0) --> (and $ map not (map (\code -> ibanTestIncrementSingleNumber code delta) validIbans)))
+    print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck single position swap"
+    quickCheckResult(\p1 p2 -> (p1 /= p2 && p1 < 25 && p2 < 25) --> (and $ map not (map (\code -> ibanTestSwapCode code p1 p2) validIbans)))
+    --TODO: fix
 
