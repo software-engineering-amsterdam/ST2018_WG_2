@@ -643,7 +643,7 @@ deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
 
 
 -- ===============
--- === EULER 1 ===
+-- === EULER 1 === 0:15:00 hours
 -- ===============
 -- apply the filter to the search space, outcome is 233168
 sumOf35Dividers :: Int
