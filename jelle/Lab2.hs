@@ -176,15 +176,16 @@ deran n =
     let (x:xs) = permutations [0..n-1] 
     in filter (isDerangement x) xs
 
-derange :: [Int] -> [Int]
-derange [] = []
-derange (x:xs) = xs ++ [x]
-
+-- we restrict the domain of n to [1,20) so that the result remains computable
 isDerangementTest :: Int -> Bool
-isDerangementTest n = n <= 1 || isDerangement [0..n-1] (derange [0..n-1])
+isDerangementTest n = (n <= 1 && n > 20) (-->) and (map (isDerangement [0..n-1]) (deran n))
 
 deranPreCond :: [Int] -> Bool
 deranPreCond l = length l > 1
 
 deranPostCond :: [Int] -> [Int] -> Bool
 deranPostCond x y = isDerangement x y
+
+-- =============
+-- === ROT13 ===
+-- =============
