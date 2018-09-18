@@ -33,13 +33,13 @@ forall = flip all
 
 -- =================================
 -- == Probability is uniform distribution check
--- == 3:30:00
+-- == 4:00:00
 -- =================================
 
 
-
-probsTest' :: [Float] -> Float
-probsTest' randomFloats = 
+--computes chi squared for numbers from the range (0..1)
+computeChiSquared :: [Float] -> Float
+computeChiSquared randomFloats = 
     let rangeCounts = countRanges randomFloats (0,0,0,0)
         validity = chiSquared rangeCounts (length randomFloats)
     in validity
@@ -71,15 +71,15 @@ verifyDistributionIsEven :: Float -> Bool
 verifyDistributionIsEven value = value < 11.34  
 
 
-
+--test suite for even distribution
 probabilityDistributionTest :: IO ()
 probabilityDistributionTest = do
     print "Testing for even distribution in random number generator"
     randomFloats <- probs 10000
     print "Chi-squared value: "
-    print (probsTest' randomFloats)
+    print (computeChiSquared randomFloats)
     print " is within acceptable range?"
-    print (verifyDistributionIsEven (probsTest' randomFloats))
+    print (verifyDistributionIsEven (computeChiSquared randomFloats))
 
 
 {-
@@ -253,6 +253,7 @@ deleteOneOccurence (x:xs) ys f = if x == f then (ys++xs) else deleteOneOccurence
 
 
 --testable properties of permutations
+--because there are no duplicates, we can use the 'nub' function to generate unique lists
 --all of these properties are incomparable and thus can not be sorted
 
 --checks if both lists are of equal length
@@ -277,7 +278,10 @@ bothListsAreUnique l r = allElementsUniqueProperty l && allElementsUniquePropert
 
 --combination of above properties that each permutation must satisfy
 permutationProperty :: Eq a => [a] -> [a] -> Bool
-permutationProperty a b = equalLengthProperty a b && everyElementOfAInBProperty a b && everyElementOfBInAProperty a b && bothListsAreUnique a b
+permutationProperty a b = equalLengthProperty a b && 
+        everyElementOfAInBProperty a b && 
+        everyElementOfBInAProperty a b && 
+        bothListsAreUnique a b
 
 
 --permutation list modifiers to preserve or remove 'is permutation' property
