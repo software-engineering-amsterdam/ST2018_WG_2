@@ -654,3 +654,22 @@ sumOf35Dividers = sum (filter divBy3or5 [1..999])
 
 divBy3or5 :: Int -> Bool
 divBy3or5 x = mod x 3 == 0 || mod x 5 == 0
+
+-- ===============
+-- === EULER 4 ===
+-- ===============
+-- helper function to decide whether a number is a palindrome
+palindrome :: Int -> Bool
+palindrome x = read (reverse (show x)) == x
+
+-- generator for all palindromes that is the product of two three-digit numbers
+threeDigitProductPalindromes :: [(Int,Int,Int)]
+threeDigitProductPalindromes = [(x,y,z) | x <- [100..999], y <- [x..999], let z = x*y, palindrome z]
+
+-- function that sorts tuples on the basis of their third element
+thirdTupleBigger :: (Int,Int,Int) -> (Int,Int,Int) -> Bool
+thirdTupleBigger (_,_,a) (_,_,b) = a > b
+
+-- get the list with all threeDigitPalindromes, sort it in descending order, and take 
+-- the head to find the answer: 913 times 993 = 906609
+largestThreeDigitProductPalindrome = head (sortWith thirdTupleBigger threeDigitProductPalindromes)
