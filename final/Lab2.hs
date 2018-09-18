@@ -483,7 +483,8 @@ numberOffset = - (toInteger $ ord 'A') + 10
 
 
 -- checks for valid IBAN according to ISO 7064 modulo check and IBAN format rules
--- it first 
+-- It first moves the first four digits to the end, then prceeds with the calculation.
+-- If the result of the calculation has mod 97 of zero, our IBAN is valid. 
 ibanValidateModulo :: String -> Bool
 ibanValidateModulo iban = 
     let (firstFour, leftover) = splitAt 4 iban
@@ -491,9 +492,13 @@ ibanValidateModulo iban =
         intForm = stringToInt swappedFour
     in (mod intForm 97) == 1
 
+-- we start the integer conversion by inserting an accumulator
 stringToInt :: String -> Integer
 stringToInt string = stringToInt' string 0
 
+-- for each character in the string, add the value of the head to the accumulator.
+-- because we want to simulate appending to get the value, we multiply by ten before
+-- adding digits and by 100 when adding letter values.
 stringToInt' :: String -> Integer -> Integer
 stringToInt' [] n = n
 stringToInt' (x:xs) n = 
@@ -501,6 +506,9 @@ stringToInt' (x:xs) n =
     in if value < 10 then stringToInt' xs (n*10 + value)
         else stringToInt' xs (n*100 + value)
 
+-- the value of a chracter is its own value if the value isn't a letter but a digit
+-- otherwise, do some conversion as indicated by the rules. Subtract the value of
+-- 'A' to get at the baseline, and add ten to get to our actual value
 charToValue :: Char -> Integer
 charToValue x = if not (isLetter x) then read [x] 
     else (toInteger (ord x)) - (toInteger (ord 'A')) + 10
