@@ -293,3 +293,17 @@ thirdTupleBigger (_,_,a) (_,_,b) = a > b
 -- get the list with all threeDigitPalindromes, sort it in descending order, and take 
 -- the head to find the answer: 913 times 993 = 906609
 largestThreeDigitProductPalindrome = head (sortWith thirdTupleBigger threeDigitProductPalindromes)
+
+-- ===============
+-- === EULER 5 ===
+-- ===============
+divisibleByRange :: Integer -> Bool
+divisibleByRange n = divisibleByRange' n [11..20]
+
+divisibleByRange' :: Integer -> [Integer] -> Bool
+divisibleByRange' _ [] = True
+divisibleByRange' n (x:xs) = (mod n x == 0) && (divisibleByRange' n xs)
+
+-- Answer: 232792560
+smallestDivisibleThrough20 :: Integer
+smallestDivisibleThrough20 = head [x | x <- [20,30..], divisibleByRange x]

@@ -708,3 +708,21 @@ largestThreeDigitProductPalindrome = head (sortWith thirdTupleBigger threeDigitP
 {-
 Output: (913,993,906609)
 -}
+
+
+-- ===============
+-- === EULER 5 ===
+-- ===============
+divisibleByRange :: Integer -> Bool
+divisibleByRange n = divisibleByRange' n [11..20]
+
+divisibleByRange' :: Integer -> [Integer] -> Bool
+divisibleByRange' _ [] = True
+divisibleByRange' n (x:xs) = (mod n x == 0) && (divisibleByRange' n xs)
+
+smallestDivisibleThrough20 :: Integer
+smallestDivisibleThrough20 = head [x | x <- [20,30..], divisibleByRange x]
+
+{- 
+Output: 232792560
+-}
