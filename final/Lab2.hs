@@ -610,3 +610,14 @@ changeNthElement idx transform list
 --source: https://stackoverflow.com/a/31978353
 deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
 -------------
+
+
+-- ===============
+-- === EULER 1 ===
+-- ===============
+-- apply the filter to the search space, outcome is 233168
+sumOf35Dividers :: Int
+sumOf35Dividers = sum (filter divBy3or5 [1..999])
+
+divBy3or5 :: Int -> Bool
+divBy3or5 x = mod x 3 == 0 || mod x 5 == 0
