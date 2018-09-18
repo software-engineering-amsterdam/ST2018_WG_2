@@ -118,20 +118,6 @@ otherTest =
 -- =================================
 -- == Testing Properties Strength == 1:00:00
 -- =================================
-
-newtype Prop1 = Prop1 (Int -> Bool)
-instance Show Prop1 where
-    show a = "prop1"
-newtype Prop2 = Prop2 (Int -> Bool)
-instance Show Prop2 where
-    show a = "prop2"
-newtype Prop3 = Prop3 (Int -> Bool)
-instance Show Prop3 where
-    show a = "prop3"
-newtype Prop4 = Prop4 (Int -> Bool)
-instance Show Prop4 where
-    show a = "prop4"
-
 prop1 :: Int -> Bool
 prop1 x = x > 3 && even x
 prop2 :: Int -> Bool
@@ -141,13 +127,13 @@ prop3 x = (even x && x > 3) || even x
 prop4 :: Int -> Bool
 prop4 x = even x
 
-stronger :: (Int -> Bool) -> (Int -> Bool) -> Bool
-stronger p1 p2 =
+stronger :: ([Char], (Int -> Bool)) -> ([Char], (Int -> Bool)) -> Bool
+stronger (_, p1) (_, p2) =
     let r1 = map p1 [(-10)..10]
         r2 = map p2 [(-10)..10]
     in foldr (&&) True (zipWith (-->) r1 r2)
 
-weaker :: (Int -> Bool) -> (Int -> Bool) -> Bool
+weaker :: ([Char], (Int -> Bool)) -> ([Char], (Int -> Bool)) -> Bool
 weaker p1 p2 = stronger p2 p1
 
 sortWith :: (a -> a -> Bool) -> [a] -> [a]
@@ -155,8 +141,11 @@ sortWith _ [] = []
 sortWith f (x:xs) = sortWith f [i | i <- xs, f i x] ++ [x] 
                     ++ sortWith f [i | i <- xs, not (f i x)]
 
-sortedProps :: [(Int -> Bool)]
-sortedProps = sortWith stronger [prop1, prop2, prop3, prop4]
+sortedProps :: [[Char]]
+sortedProps = 
+    let contenders = [("prop1", prop1), ("prop2", prop2), ("prop3", prop3), ("prop4", prop4)]
+        result = sortWith stronger contenders
+    in map (\(x,_) -> x) result
 
 -- ==============================
 -- == Recognizing Permutations == 1:00:00
