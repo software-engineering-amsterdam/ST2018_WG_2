@@ -1,4 +1,3 @@
-
 module Lab2 where
 
 import Data.List
@@ -7,7 +6,6 @@ import System.Random
 import Test.QuickCheck
 
 infix 1 --> 
-
 (-->) :: Bool -> Bool -> Bool
 p --> q = (not p) || q
 
@@ -26,7 +24,33 @@ data Shape = NoTriangle | Equilateral
 
 
 -- Exercise 1 Are the numbers generated randomly?
---Martin has the solution, try it by myself at home
+
+occurenceFirstQuartile x = length $ filter (\y -> y> 0 && y<0.25) x
+occuranceSecondQuartile x = length $ filter (\y -> y>= 0.25 && y<0.5) x
+occuranceThirdQuartile x = length $ filter (\y -> y>=0.5 && y<0.75) x
+occuranceFourthQuartile x =  length $ filter (\y -> y>=0.75 && y<1) x
+
+listOfOccurrances::[Float]->(Int,Int,Int,Int)
+listOfOccurrances x = (occurenceFirstQuartile x, occuranceSecondQuartile x, occuranceThirdQuartile x, occuranceFourthQuartile x)
+
+percentageOccurances :: (Int, Int, Int, Int) -> (Double, Double, Double, Double)
+percentageOccurances (a,b,c,d) = ((fromIntegral a) / (fromIntegral (a+b+c+d)), (fromIntegral b) / (fromIntegral (a+b+c+d)), (fromIntegral c) / (fromIntegral (a+b+c+d)), (fromIntegral d) / (fromIntegral (a+b+c+d))) 
+
+averagePercentage = 0.25
+acceptedDeviation = 0.01
+
+isInRange::Double->Bool
+isInRange x = x<=(averagePercentage + acceptedDeviation) && x>=(averagePercentage - acceptedDeviation)
+
+
+isEvenlyDistributed::(Double,Double,Double,Double)->Bool
+isEvenlyDistributed (a,b,c,d) = isInRange a && isInRange b && isInRange c&& isInRange d
+
+testEvenDistributionGenerator = do
+        print "Testing if Red Curry is really random"
+        x <- probs 50000
+        return (isEvenlyDistributed $ percentageOccurances $ listOfOccurrances x)
+
 
 
 
@@ -119,9 +143,7 @@ quickCheckPermutationReverse a = permutationTest a (reverseList a)
 quickCheckPermutationNotEqual a = permutationTest a (map (\x -> x+10) a)
 
 
---===========================================
 --Exercise 6 IBAN
---===========================================
 -- Time spent: ~ 5h 
 intToList :: Int -> [Int]
 intToList 0 = []
