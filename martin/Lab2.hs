@@ -306,3 +306,89 @@ ibanTestCases = do
     quickCheckResult(\p1 p2 -> (p1 /= p2 && p1 < 25 && p2 < 25) --> (and $ map not (map (\code -> ibanTestSwapCode code p1 p2) validIbans)))
     --TODO: fix
 
+
+
+-- ====== Implementing and testing ROT13 encoding
+-- time: 60 minutes
+
+{-
+ROT13 specification:
+
+1. ROT13(x) =  
+    1a) IF x is upper/lowercase letter of latin alphabet, move x 13 positions to the right and wrap around
+    1b) OTHERWISE x remains the same
+
+2. ROT13(ROT13(x)) = x
+    
+-}
+
+rot13AlphabetUppercase = ['A'..'Z']
+rot13AlphabetLowercase = ['a'..'z']
+
+
+rot13SingleChar :: Char -> Char
+rot13SingleChar x 
+    | x `elem` rot13AlphabetUppercase = rot13Transform (findIndex (==x) rot13AlphabetUppercase) x rot13AlphabetUppercase
+    | x `elem` rot13AlphabetLowercase = rot13Transform (findIndex (==x) rot13AlphabetLowercase) x rot13AlphabetLowercase
+    | otherwise = x
+
+
+
+rot13Transform (Just index) x alphabet = alphabet !! ((index + 13) `mod` (length alphabet))
+rot13Transform Nothing x _ = x 
+
+
+rot13 :: String -> String
+rot13 input = map rot13SingleChar input
+
+rot13InverseProperty :: String -> Bool
+rot13InverseProperty code = (rot13 $ rot13 code) == code
+
+
+rot13EncodableAlphabet = rot13AlphabetLowercase ++ rot13AlphabetUppercase 
+--rot13TestAlphabet = rot13EncodableAlphabet ++ ['.',' ', '?','!',',']
+
+
+
+rot13EncodedProperty code = and $ map rot13EncodedPropertyChar code
+rot13NotEncodedProperty code = and $ map rot13NotEncodedPropertyChar code
+
+rot13EncodedPropertyChar :: Char -> Bool
+rot13EncodedPropertyChar x = (x `elem` rot13EncodableAlphabet) --> ((head $ rot13 [x]) /= x)
+rot13NotEncodedPropertyChar :: Char -> Bool
+rot13NotEncodedPropertyChar x = (not $ x `elem` rot13EncodableAlphabet) --> ((head $ rot13 [x]) == x)
+
+
+rot13Tests = do 
+    quickCheckResult(\x -> rot13InverseProperty x)
+    quickCheckResult(\x -> rot13EncodedProperty x)
+    quickCheckResult(\x -> rot13NotEncodedProperty x)
+
+
+-- Recognizing and generating derangements
+
+--Give a Haskell implementation of a property isDerangement that checks whether one list is a derangement of another one.
+
+--isDerangement :: [Int] -> [Int] -> Bool
+isDerangement a b = (isPermutation a b) && (and $ zipWith (/=) a b)
+
+--Give a Haskell implementation of a function deran that generates a list of all derangements of the list [0..n-1].
+
+deran :: Int -> [[Int]]
+deran n = let list = [0..n-1] in filter (\x -> isDerangement x list) (permutations list)
+
+
+--deranFilter :: Eq a => [[a]] -> [[a]] -> [[a]]
+--deranFilter [] res = res
+--deranFilter (x:xs) res = 
+--    if forall res (\y -> isDerangement x y) then deranFilter xs (x:res) else deranFilter xs res
+
+
+
+--source: https://codegolf.stackexchange.com/a/113942
+--TODO: use this property to test if deran is correct or not
+subfactorial :: Int -> Int
+subfactorial 0=1
+subfactorial n=n*subfactorial(n-1)+(-1)^n
+
+--time: 43 min
