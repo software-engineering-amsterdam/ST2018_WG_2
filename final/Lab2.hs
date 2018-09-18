@@ -652,28 +652,40 @@ deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
 -- ===============
 -- === EULER 1 === 0:15:00 hours
 -- ===============
--- apply the filter to the search space, outcome is 233168
-sumOf35Dividers :: Int
-sumOf35Dividers = sum (filter divBy3or5 [1..999])
 
+--computes the sum of all numbers divisible by 3 or 5 to 999
+sumOf35Dividers :: Int
+sumOf35Dividers = sum (filter divBy3or5 [1..999]) -- apply the filter to the search space
+
+
+--predicate to check if number is divisible by 3 or 5
 divBy3or5 :: Int -> Bool
 divBy3or5 x = mod x 3 == 0 || mod x 5 == 0
 
+{-
+Output: 233168
+-}
 
 -- ===============
 -- === EULER 2 === 0:30:00 hours
 -- ===============
 
+--computes the n-th fibonaci number
 fibonacci:: Int
-fibonacci = sum (filter (even) (fibonacci' 0 1))
+fibonacci = sum (filter even (fibonacci' 0 1))
 
+--helper function to compute fibonaci based on 2 previous ones
 fibonacci':: Int -> Int -> [Int]
 fibonacci' x y = 
-              let numberToAppenad = x + y
-              in if numberToAppenad < 4000000 -- restriction provided in the task 
-                 then numberToAppenad : fibonacci' y numberToAppenad  
+              let numberToAppend = x + y
+              in if numberToAppend < 4000000 -- restriction provided in the task 
+                 then numberToAppend : fibonacci' y numberToAppend  
               else []
 
+{-
+Output: 4613732
+-}
+              
 -- ===============
 -- === EULER 4 ===
 -- ===============
@@ -693,3 +705,6 @@ thirdTupleBigger (_,_,a) (_,_,b) = a > b
 -- the head to find the answer: 913 times 993 = 906609
 largestThreeDigitProductPalindrome = head (sortWith thirdTupleBigger threeDigitProductPalindromes)
 
+{-
+Output: (913,993,906609)
+-}
