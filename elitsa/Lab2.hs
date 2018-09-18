@@ -1,7 +1,7 @@
 import Data.List
 import Numeric
 import Data.Char
-import Test.QuickCheck
+
 
 
 -- Task 2 
@@ -77,4 +77,25 @@ rot13:: [Char] -> [Char]
 rot13 [] = []
 rot13 list = replaceChar(getIndex(head list) alphabet) : rot13(tail(list)) 
 			
+			
+-- Euler 
+-- TASK 1
+divisibleBy3or5:: Int -> Int
+divisibleBy3or5  boundary = sum [x | x <- [1.. boundary], (mod x 5 == 0 || mod x 3 == 0) && (x < boundary)]
+
+-- Task 2
+
+fibonacci:: Int -> Int
+fibonacci maxNum = sum (filter (even) (fibonacci' 0 1 maxNum)) -- maxNum in the case of the task is equal to 4 000 000 
+
+fibonacci':: Int -> Int -> Int -> [Int]
+fibonacci' x y maxNum= 
+              let numberToAppenad = x + y
+              in if numberToAppenad < maxNum 
+              	 then numberToAppenad : fibonacci' y numberToAppenad maxNum 
+              else []
+
+
+
+
 			
