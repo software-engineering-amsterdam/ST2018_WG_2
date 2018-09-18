@@ -654,3 +654,18 @@ sumOf35Dividers = sum (filter divBy3or5 [1..999])
 
 divBy3or5 :: Int -> Bool
 divBy3or5 x = mod x 3 == 0 || mod x 5 == 0
+
+
+-- ===============
+-- === EULER 2 === 0:30:00 hours
+-- ===============
+
+fibonacci:: Int
+fibonacci = sum (filter (even) (fibonacci' 0 1))
+
+fibonacci':: Int -> Int -> [Int]
+fibonacci' x y = 
+              let numberToAppenad = x + y
+              in if numberToAppenad < 4000000 -- restriction provided in the task 
+                 then numberToAppenad : fibonacci' y numberToAppenad  
+              else []

@@ -85,14 +85,14 @@ divisibleBy3or5  boundary = sum [x | x <- [1.. boundary], (mod x 5 == 0 || mod x
 
 -- Task 2
 
-fibonacci:: Int -> Int
-fibonacci maxNum = sum (filter (even) (fibonacci' 0 1 maxNum)) -- maxNum in the case of the task is equal to 4 000 000 
+fibonacci:: Int
+fibonacci = sum (filter (even) (fibonacci' 0 1))
 
-fibonacci':: Int -> Int -> Int -> [Int]
-fibonacci' x y maxNum= 
+fibonacci':: Int -> Int -> [Int]
+fibonacci' x y = 
               let numberToAppenad = x + y
-              in if numberToAppenad < maxNum 
-              	 then numberToAppenad : fibonacci' y numberToAppenad maxNum 
+              in if numberToAppenad < 4000000 -- restriction provided in the task 
+                 then numberToAppenad : fibonacci' y numberToAppenad  
               else []
 
 
