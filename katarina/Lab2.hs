@@ -1,4 +1,3 @@
-
 module Lab2 where
 
 import Data.List
@@ -7,7 +6,6 @@ import System.Random
 import Test.QuickCheck
 
 infix 1 --> 
-
 (-->) :: Bool -> Bool -> Bool
 p --> q = (not p) || q
 
@@ -26,7 +24,64 @@ data Shape = NoTriangle | Equilateral
 
 
 -- Exercise 1 Are the numbers generated randomly?
---Martin has the solution, try it by myself at home
+-- 3h
+
+occurenceFirstQuartile x = length $ filter (\y -> y> 0 && y<0.25) x
+occuranceSecondQuartile x = length $ filter (\y -> y>= 0.25 && y<0.5) x
+occuranceThirdQuartile x = length $ filter (\y -> y>=0.5 && y<0.75) x
+occuranceFourthQuartile x =  length $ filter (\y -> y>=0.75 && y<1) x
+
+listOfOccurrances::[Float]->(Int,Int,Int,Int)
+listOfOccurrances x = (occurenceFirstQuartile x, occuranceSecondQuartile x, occuranceThirdQuartile x, occuranceFourthQuartile x)
+
+percentageOccurances :: (Int, Int, Int, Int) -> (Double, Double, Double, Double)
+percentageOccurances (a,b,c,d) = ((fromIntegral a) / (fromIntegral (a+b+c+d)), (fromIntegral b) / (fromIntegral (a+b+c+d)), (fromIntegral c) / (fromIntegral (a+b+c+d)), (fromIntegral d) / (fromIntegral (a+b+c+d))) 
+
+averagePercentage = 0.25
+acceptedDeviation = 0.01
+
+isInRange::Double->Bool
+isInRange x = x<=(averagePercentage + acceptedDeviation) && x>=(averagePercentage - acceptedDeviation)
+
+
+isEvenlyDistributed::(Double,Double,Double,Double)->Bool
+isEvenlyDistributed (a,b,c,d) = isInRange a && isInRange b && isInRange c&& isInRange d
+
+testEvenDistributionGenerator = do
+        print "Testing if Red Curry is really random"
+        x <- probs 50000
+        return (isEvenlyDistributed $ percentageOccurances $ listOfOccurrances x)
+
+
+--TestResult: "Testing if RedCurry is really random" True 
+-- it is true at least for the runs that i processed
+
+
+
+-- Exercise 2 
+-- 1 h 
+
+triangle' :: Integer -> Integer -> Integer -> Shape
+triangle' a b c = case ((a+b<=c) || (b+c<=a) || (a+c<=b)) of True -> NoTriangle 
+                                                             False -> case (a==b && b==c) of  True -> Equilateral
+                                                                                              False -> case ((a^2 + b^2) == c^2) of True -> Rectangular
+                                                                                                                                    False -> case (a==b||b==c||a==c) of True -> Isosceles
+                                                                                                                                                                        False -> Other
+triangle :: Integer -> Integer -> Integer -> Shape
+triangle x y z = let [a,b,c] = sort [x, y, z] in triangle' a b c
+
+--Tests copied from Martin
+triangleTestCases = [([1, 2, 1],NoTriangle), ([3,4,5], Rectangular)]
+
+triangleTestCaseVerifier = map (\([a,b,c],expected) -> triangle a b c == expected) triangleTestCases
+
+
+triangleChecker = do
+--    quickCheckResult(\[a,b,c] ->  triangleInequalityProperty (a::Positive Integer) (b::Integer) (c::Integer) --> ((triangle a b c) `elem` triangles))
+    print "Testing sample triangle numbers"
+    print $ and $ triangleTestCaseVerifier
+
+
 
 
 
@@ -119,9 +174,7 @@ quickCheckPermutationReverse a = permutationTest a (reverseList a)
 quickCheckPermutationNotEqual a = permutationTest a (map (\x -> x+10) a)
 
 
---===========================================
 --Exercise 6 IBAN
---===========================================
 -- Time spent: ~ 5h 
 intToList :: Int -> [Int]
 intToList 0 = []

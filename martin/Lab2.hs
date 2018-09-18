@@ -30,7 +30,7 @@ forall = flip all
 
 
 -- ====== 1 ======== 3:00 h
-
+freqDistCount :: [Float] -> (Int, Int, Int, Int)
 freqDistCount list = let 
     q1 = length $ filter (\x -> x > 0 && x < 0.25) list
     q2 = length $ filter (\x -> x >= 0.25 && x < 0.50) list
@@ -39,6 +39,7 @@ freqDistCount list = let
     in (q1,q2,q3,q4)
 
 
+--TODO: improve efficiency and method
 freqDistPerc (a,b,c,d) = let sum = a+b+c+d
                         in (cDiv a sum, cDiv b sum, cDiv c sum, cDiv d sum)
 
@@ -179,8 +180,7 @@ swapFirst2 [] = []
 swapFirst2 [x] = [x]
 swapFirst2 (x:y:xs)  = y:x:(swapFirst2 xs)
 
---custom test cases
-
+--custom test cases for permutations
 permutationTestCases :: [([Integer], [Integer], Bool)]
 permutationTestCases = [
     ([],[], True),
@@ -191,9 +191,11 @@ permutationTestCases = [
     ([1],[2], False),
     ([1,2,3],[1,2,3,4], False)]
 
+--verifies that all permutation test cases are satisfied
+permutationTestCaseVerifier :: [Bool]
 permutationTestCaseVerifier = map (\(l,r,expected) -> (permutationProperty l r) == expected) permutationTestCases
 
-permutationQCTest = do 
+permutationTests = do 
     print "Testing permutations via QC and swapping 2 elements"
     quickCheckResult(\original -> let set = nub original in permutationProperty (set :: [Int])(swapFirst2 set) )
     print "Testing permutations via QC and reversing list"
@@ -204,7 +206,7 @@ permutationQCTest = do
     print $ and $ permutationTestCaseVerifier 
     
 -- =========== IBAN
---time: 5:45h with testing
+--time: 7:45h with testing
 
 
 -- helper functions intToList and listToInt. these functions are each other's inversions. 
@@ -217,7 +219,7 @@ listToInt [] = 0
 listToInt l = (last l) + 10 * listToInt (init l)
 
 
-
+--function returns True for valid IBANs, False otherwise
 iban :: String -> Bool
 iban code = ibanValidLength code && ibanValidCountry code && ibanValidChecksumFormat code &&  ibanValidateModulo code
 
@@ -227,6 +229,8 @@ iban code = ibanValidLength code && ibanValidCountry code && ibanValidChecksumFo
 ibanValidLength :: String -> Bool
 ibanValidLength code = length code >= 15 && length code <= 34
 
+--validates that the country code is in first two positions and is a letter
+ibanValidCountry :: String -> Bool
 ibanValidCountry code = forall (take 2 code) (\x -> isUpper x && isLetter x) 
 
 --checks for the presence of a 2 digit checksum immediately following the country code
@@ -268,12 +272,29 @@ validIbans = ["GB82WEST12345698765432", "AD4191688595KBCTGKHRGYZM", "AD469913764
 
 invalidIbansStatic = [
     "",  --invalid length
-    "ZZZZ1234" --missing checksum
+    "ZZZZ123444444444444444444444", --missing checksum
+    "AL47212110090000000235698742", --changed last digit 1-> 2
+    "AL4721211009000000023569874", --dropped last digit
+    "AL47212110090010000235698741" --changed 0->1 in the middle
     ] 
 
 
+{-
+Source: https://en.wikipedia.org/wiki/International_Bank_Account_Number
+The check digits enable the sending bank (or its customer) to perform a sanity check 
+of the routing destination and account number from a single string of data 
+at the time of data entry.[4] This check is guaranteed to detect 
+any instances where a single character has been omitted, 
+duplicated, mistyped or where two characters have been transposed. 
+Thus routing and account number errors are virtually eliminated.[9]
+-}
+
 --functions to transform (valid) IBAN to an invalid state for testing
-ibanTestSwapCode code p1 p2 = (p1 < length code && p2 < length code && p1 /= p2 && (code !! p1 /= code !! p2)) -->  (iban $ swapElementsAt p1 p2 code)
+
+--transpose single letter to another via rot13
+ibanTestTranspose :: String -> Int -> Bool
+ibanTestTranspose code pos = let index = (pos `mod` (length code)) in let newLetter = (rot13SingleChar (code !! index)) in (isLetter (code !! index)) --> (not $ iban ((changeNthElement index (\_-> newLetter) code )))
+
 
 
 --increments first found number in IBAN, this should fail the ISO 7064 modulo check, 
@@ -282,17 +303,11 @@ ibanIncrementSingleNumber :: String -> Int -> Int -> String
 ibanIncrementSingleNumber "" _ _ = ""
 ibanIncrementSingleNumber (x:xs) delta base = if isDigit x then (show $ mod (digitToInt x + delta) base) ++ xs  else x : ibanIncrementSingleNumber xs delta base
 
+ibanTestIncrementSingleNumber :: String -> Int -> Bool
 ibanTestIncrementSingleNumber code delta = delta /= 0 -->  (iban $ ibanIncrementSingleNumber code delta 10)
 
---source: https://stackoverflow.com/a/30551130/1663367 
-swapElementsAt :: Int -> Int -> [a] -> [a]
-swapElementsAt i j xs = let elemI = xs !! i
-                            elemJ = xs !! j
-                            left = take i xs
-                            middle = take (j - i - 1) (drop (i + 1) xs)
-                            right = drop (j + 1) xs
-                        in  left ++ [elemJ] ++ middle ++ [elemI] ++ right
-----------------------------------------
+
+
 
                     
 ibanTestCases = do 
@@ -302,9 +317,9 @@ ibanTestCases = do
     print $ and $ map not (map iban invalidIbansStatic)
     print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck number increment"
     quickCheckResult(\delta -> (delta /= 0 && mod delta 10 /= 0) --> (and $ map not (map (\code -> ibanTestIncrementSingleNumber code delta) validIbans)))
-    print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck single position swap"
-    quickCheckResult(\p1 p2 -> (p1 /= p2 && p1 < 25 && p2 < 25) --> (and $ map not (map (\code -> ibanTestSwapCode code p1 p2) validIbans)))
-    --TODO: fix
+    print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck single letter transposition"
+    quickCheckResult(\p1 -> (and $ map (\code -> ibanTestTranspose code p1) validIbans))
+
 
 
 
@@ -315,25 +330,26 @@ ibanTestCases = do
 ROT13 specification:
 
 1. ROT13(x) =  
-    1a) IF x is upper/lowercase letter of latin alphabet, move x 13 positions to the right and wrap around
-    1b) OTHERWISE x remains the same
+    1a) IF x is upper/lowercase letter of latin alphabet, move x 13 positions to the right and wrap around, preserving case
+    1b) OTHERWISE x remains unchanged
 
 2. ROT13(ROT13(x)) = x
+   ROT13 is its own inverse
     
 -}
 
 rot13AlphabetUppercase = ['A'..'Z']
 rot13AlphabetLowercase = ['a'..'z']
 
-
+-- encodes single character using the ROT13 algorithm
 rot13SingleChar :: Char -> Char
 rot13SingleChar x 
-    | x `elem` rot13AlphabetUppercase = rot13Transform (findIndex (==x) rot13AlphabetUppercase) x rot13AlphabetUppercase
-    | x `elem` rot13AlphabetLowercase = rot13Transform (findIndex (==x) rot13AlphabetLowercase) x rot13AlphabetLowercase
+    | x `elem` rot13AlphabetUppercase = rot13Transform (findIndex (== x) rot13AlphabetUppercase) x rot13AlphabetUppercase
+    | x `elem` rot13AlphabetLowercase = rot13Transform (findIndex (== x) rot13AlphabetLowercase) x rot13AlphabetLowercase
     | otherwise = x
 
 
-
+rot13Transform :: Maybe Int -> p -> [p] -> p
 rot13Transform (Just index) x alphabet = alphabet !! ((index + 13) `mod` (length alphabet))
 rot13Transform Nothing x _ = x 
 
@@ -344,12 +360,11 @@ rot13 input = map rot13SingleChar input
 rot13InverseProperty :: String -> Bool
 rot13InverseProperty code = (rot13 $ rot13 code) == code
 
-
+rot13EncodableAlphabet :: String
 rot13EncodableAlphabet = rot13AlphabetLowercase ++ rot13AlphabetUppercase 
---rot13TestAlphabet = rot13EncodableAlphabet ++ ['.',' ', '?','!',',']
 
 
-
+rot13EncodedProperty :: String -> Bool
 rot13EncodedProperty code = and $ map rot13EncodedPropertyChar code
 rot13NotEncodedProperty code = and $ map rot13NotEncodedPropertyChar code
 
@@ -369,7 +384,7 @@ rot13Tests = do
 
 --Give a Haskell implementation of a property isDerangement that checks whether one list is a derangement of another one.
 
---isDerangement :: [Int] -> [Int] -> Bool
+isDerangement :: [Int] -> [Int] -> Bool
 isDerangement a b = (isPermutation a b) && (and $ zipWith (/=) a b)
 
 --Give a Haskell implementation of a function deran that generates a list of all derangements of the list [0..n-1].
@@ -378,17 +393,58 @@ deran :: Int -> [[Int]]
 deran n = let list = [0..n-1] in filter (\x -> isDerangement x list) (permutations list)
 
 
---deranFilter :: Eq a => [[a]] -> [[a]] -> [[a]]
---deranFilter [] res = res
---deranFilter (x:xs) res = 
---    if forall res (\y -> isDerangement x y) then deranFilter xs (x:res) else deranFilter xs res
-
+deranCountProperty :: Int -> [[Int]] -> Bool
+deranCountProperty n list = subfactorial n == length list
 
 
 --source: https://codegolf.stackexchange.com/a/113942
---TODO: use this property to test if deran is correct or not
 subfactorial :: Int -> Int
-subfactorial 0=1
-subfactorial n=n*subfactorial(n-1)+(-1)^n
+subfactorial 0 = 1
+subfactorial n = n * subfactorial (n-1) + (-1)^n
 
 --time: 43 min
+
+--tests:
+derangementTests = do 
+    print "Testing that derangement count is the subfactorial"
+    quickCheckResult(\n -> (n >= 1) --> ( let x = n `mod` 8 in deranCountProperty x (deran x)))
+
+
+
+
+--source: https://stackoverflow.com/a/30557189 
+swapElementsAt :: Int -> Int -> [a] -> [a]
+swapElementsAt f s xs = map snd . foldr (\x a -> 
+        if fst x == f then ys !! s : a
+        else if fst x == s then ys !! f : a
+        else x : a) [] $ ys
+    where ys = zip [0..] xs                        
+
+----------------------------------------
+
+--source: https://stackoverflow.com/a/15530742
+
+changeNthElement :: Int -> (a -> a) -> [a] -> [a]
+changeNthElement idx transform list
+    | idx < 0   = list
+    | otherwise = case splitAt idx list of
+                    (front, element:back) -> front ++ transform element : back
+                    _ -> list    -- if the list doesn't have an element at index idx
+
+----------------------
+
+
+
+--source: https://stackoverflow.com/a/31978353
+deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
+
+-------------
+
+
+
+
+
+--ibanTestRemove :: String -> Int -> Bool
+--ibanTestRemove code pos = let index = (pos `mod` (length code)) in not $ iban (deleteAt index code)
+--print "Testing converted IBANs to *probably* invalid IBANs via QuickCheck single character delete"
+--quickCheckResult(\p1 -> p1 > 0 --> (and $ map (\code -> ibanTestRemove code p1) validIbans))
