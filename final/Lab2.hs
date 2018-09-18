@@ -33,26 +33,28 @@ forall = flip all
 
 -- =================================
 -- == Probability is uniform distribution check
--- == 2:30:00
+-- == 3:30:00
 -- =================================
 
 
 
---probsTest' :: RealFloat a => [Float] -> a
+probsTest' :: [Float] -> Float
 probsTest' randomFloats = 
     let rangeCounts = countRanges randomFloats (0,0,0,0)
         validity = chiSquared rangeCounts (length randomFloats)
     in validity
 
 
---chiSquared :: (RealFloat a) => (Int,Int,Int,Int) -> Int -> a
+--computes chi squared value of 4 bins
+chiSquared :: (Int,Int,Int,Int) -> Int -> Float
 chiSquared (a,b,c,d) n = 
     let e =  (fromIntegral n) / 4.0
         values = (a:b:c:d:[])
-        chiSquaredValues = map (\x -> ((x - e)^2)/e) values
+        chiSquaredValues = map (\x -> (((fromIntegral x) - e)^2)/e) values
     in sum chiSquaredValues
 
---countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
+--sorts input floating points from the range (0..1) to 4 quartiles
+countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
 countRanges [] (a,b,c,d) = (a,b,c,d)
 countRanges (x:xs) (a,b,c,d)
     | x < 0.25 = countRanges xs (a+1,b,c,d)
@@ -62,8 +64,10 @@ countRanges (x:xs) (a,b,c,d)
 
 
 --https://en.wikipedia.org/wiki/Chi-squared_distribution 
---we have 3 degress of freedom (4 bins), and we want p-value>0.01
---verifyDistributionIsEven :: (RealFloat a) => a -> Bool
+--we have 3 degress of freedom (4 bins/quartiles), and we want p-value>0.01, 
+--using the table in wikipedia the value is 11.34, 
+--if the Chi-squared value is below, we have 99% probably even distribution
+verifyDistributionIsEven :: Float -> Bool
 verifyDistributionIsEven value = value < 11.34  
 
 
