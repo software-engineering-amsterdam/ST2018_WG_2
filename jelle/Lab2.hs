@@ -178,7 +178,10 @@ deran n =
 
 -- we restrict the domain of n to [1,20) so that the result remains computable
 isDerangementTest :: Int -> Bool
-isDerangementTest n = (n <= 1 && n > 20) (-->) and (map (isDerangement [0..n-1]) (deran n))
+isDerangementTest n = apply (n <= 1 && n > 10) (-->) (and (map (isDerangement [0..n-1]) (deran n)))
+
+apply :: a -> (a -> b -> c) -> b -> c
+apply a f b = f a b
 
 deranPreCond :: [Int] -> Bool
 deranPreCond l = length l > 1
@@ -189,3 +192,23 @@ deranPostCond x y = isDerangement x y
 -- =============
 -- === ROT13 ===
 -- =============
+{-
+rot13 takes a letter in Character form, i.e. an ASCII character in the domain
+[65,90]v[97,122]. It will add 13 to this number and if that causes it to be
+outside of the domain subtract 26 to bring it back into the domain of letters.
+-}
+isLetter' :: Int -> Bool
+isLetter' x = elem x ([65..90]++[97..122])
+
+rot13 :: [Char] -> [Char]
+rot13 [] = []
+rot13 (x:xs) = (rotate x : rot13 xs)
+
+rotate :: Char -> Char
+rotate x = 
+    let value = fromEnum x + 13
+        newValue = if isLetter' value then value-26 else value
+    in toEnum newValue
+
+rotPreCond :: [Char] -> Bool
+rotPreCond l = and $ map (isLetter' . toEnum) l
