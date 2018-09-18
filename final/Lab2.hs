@@ -472,3 +472,33 @@ ibanTestCases = do
 
 
 
+
+
+
+--source: https://stackoverflow.com/a/30557189 
+swapElementsAt :: Int -> Int -> [a] -> [a]
+swapElementsAt f s xs = map snd . foldr (\x a -> 
+        if fst x == f then ys !! s : a
+        else if fst x == s then ys !! f : a
+        else x : a) [] $ ys
+    where ys = zip [0..] xs                        
+
+----------------------------------------
+
+--source: https://stackoverflow.com/a/15530742
+
+changeNthElement :: Int -> (a -> a) -> [a] -> [a]
+changeNthElement idx transform list
+    | idx < 0   = list
+    | otherwise = case splitAt idx list of
+                    (front, element:back) -> front ++ transform element : back
+                    _ -> list    -- if the list doesn't have an element at index idx
+
+----------------------
+
+
+
+--source: https://stackoverflow.com/a/31978353
+deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
+
+-------------
