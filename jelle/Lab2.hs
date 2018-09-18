@@ -29,6 +29,36 @@ data Shape = NoTriangle | Equilateral
 -- getIndex' (a:as) x n = 
 --     if a == x then n else getIndex' as x n+1
 
+-- ======================
+-- == Red Curry floats == 1:30:00
+-- ======================
+
+probsTest = do
+    print "probsTest"
+    randomFloats <- probs 10000
+    return (probsTest' randomFloats)
+
+-- probsTest' :: Fractional a => [Float] -> a
+probsTest' randomFloats = 
+    let rangeCounts = countRanges randomFloats (0,0,0,0)
+        validity = chiSquared rangeCounts (length randomFloats)
+    in validity
+
+-- chiSquared :: Fractional a => (Int,Int,Int,Int) -> Int -> a
+chiSquared (a,b,c,d) n = 
+    let e = (fromIntegral n) / 4.0
+        values = (a:b:c:d:[])
+        chiSquaredValues = map (\x -> ((x - e)^2)/e) values
+    in sum chiSquaredValues
+
+-- countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
+countRanges [] (a,b,c,d) = (a,b,c,d)
+countRanges (x:xs) (a,b,c,d)
+    | x < 0.25 = countRanges xs (a+1,b,c,d)
+    | x < 0.5  = countRanges xs (a,b+1,c,d)
+    | x < 0.75 = countRanges xs (a,b,c+1,d)
+    | x < 1.0  = countRanges xs (a,b,c,d+1)
+
 -- ===========================
 -- == Recognizing Triangles == 1:30:00
 -- ===========================
@@ -66,7 +96,7 @@ triangleTest = noTriangleTest && equilateralTest && isocelesTest
 
 noTriangleTest :: Bool
 noTriangleTest = 
-    let testList = map (\_ -> (randInt 0 5, randInt 0 5, randInt 10 20)) [1..20]
+    let testList = map (\_ -> (randInt 1 5, randInt 1 5, randInt 10 20)) [1..20]
     in length (filter (/= NoTriangle) (map (\(x,y,z) -> triangle x y z) testList)) == 0
 equilateralTest :: Bool
 equilateralTest = 
