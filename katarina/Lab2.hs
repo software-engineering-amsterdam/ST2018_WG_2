@@ -24,6 +24,7 @@ data Shape = NoTriangle | Equilateral
 
 
 -- Exercise 1 Are the numbers generated randomly?
+-- 3h
 
 occurenceFirstQuartile x = length $ filter (\y -> y> 0 && y<0.25) x
 occuranceSecondQuartile x = length $ filter (\y -> y>= 0.25 && y<0.5) x
@@ -50,6 +51,36 @@ testEvenDistributionGenerator = do
         print "Testing if Red Curry is really random"
         x <- probs 50000
         return (isEvenlyDistributed $ percentageOccurances $ listOfOccurrances x)
+
+
+--TestResult: "Testing if RedCurry is really random" True 
+-- it is true at least for the runs that i processed
+
+
+
+-- Exercise 2 
+-- 1 h 
+
+triangle' :: Integer -> Integer -> Integer -> Shape
+triangle' a b c = case ((a+b<=c) || (b+c<=a) || (a+c<=b)) of True -> NoTriangle 
+                                                             False -> case (a==b && b==c) of  True -> Equilateral
+                                                                                              False -> case ((a^2 + b^2) == c^2) of True -> Rectangular
+                                                                                                                                    False -> case (a==b||b==c||a==c) of True -> Isosceles
+                                                                                                                                                                        False -> Other
+triangle :: Integer -> Integer -> Integer -> Shape
+triangle x y z = let [a,b,c] = sort [x, y, z] in triangle' a b c
+
+--Tests copied from Martin
+triangleTestCases = [([1, 2, 1],NoTriangle), ([3,4,5], Rectangular)]
+
+triangleTestCaseVerifier = map (\([a,b,c],expected) -> triangle a b c == expected) triangleTestCases
+
+
+triangleChecker = do
+--    quickCheckResult(\[a,b,c] ->  triangleInequalityProperty (a::Positive Integer) (b::Integer) (c::Integer) --> ((triangle a b c) `elem` triangles))
+    print "Testing sample triangle numbers"
+    print $ and $ triangleTestCaseVerifier
+
 
 
 
