@@ -38,21 +38,20 @@ forall = flip all
 
 
 
---probsTest' :: Fractional a => [Float] -> a
+--probsTest' :: RealFloat a => [Float] -> a
 probsTest' randomFloats = 
     let rangeCounts = countRanges randomFloats (0,0,0,0)
         validity = chiSquared rangeCounts (length randomFloats)
     in validity
 
 
---chiSquared :: (Fractional a) => (Int,Int,Int,Int) -> Int -> a
+--chiSquared :: (RealFloat a) => (Int,Int,Int,Int) -> Int -> a
 chiSquared (a,b,c,d) n = 
-    let e = (fromIntegral n) / 4.0
+    let e =  (fromIntegral n) / 4.0
         values = (a:b:c:d:[])
         chiSquaredValues = map (\x -> ((x - e)^2)/e) values
     in sum chiSquaredValues
 
---countRanges :: (Ord a1, Fractional a1, Num a) => [a1] -> (a, a, a, a) -> (a, a, a, a)
 --countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
 countRanges [] (a,b,c,d) = (a,b,c,d)
 countRanges (x:xs) (a,b,c,d)
@@ -63,21 +62,21 @@ countRanges (x:xs) (a,b,c,d)
 
 
 --https://en.wikipedia.org/wiki/Chi-squared_distribution 
---we have 3 degress of freedom (4 bins), and we want p-value>0.05
---verifyDistributionIsEven :: (Float a) => a -> Bool
-verifyDistributionIsEven value = value < 7.81
+--we have 3 degress of freedom (4 bins), and we want p-value>0.01
+--verifyDistributionIsEven :: (RealFloat a) => a -> Bool
+verifyDistributionIsEven value = value < 11.34  
 
 
-{-
+
 probabilityDistributionTest :: IO ()
 probabilityDistributionTest = do
     print "Testing for even distribution in random number generator"
     randomFloats <- probs 10000
-    print $ "Chi-squared value: "
+    print "Chi-squared value: "
     print (probsTest' randomFloats)
-    print $ " is within acceptable range?"
-    print $ verifyDistributionIsEven (probsTest' randomFloats)
--}
+    print " is within acceptable range?"
+    print (verifyDistributionIsEven (probsTest' randomFloats))
+
 
 {-
 *Lab2> probabilityDistributionTest 
