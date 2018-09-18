@@ -5,10 +5,8 @@ import Data.Char
 import System.Random
 import Test.QuickCheck
 --import ShowFunctions
-
 --import Text.Show.Functions
-
-import Test.QuickCheck.Function -- https://stackoverflow.com/questions/5208621/show-ing-functions-used-in-quickcheck-properties
+--import Test.QuickCheck.Function -- https://stackoverflow.com/questions/5208621/show-ing-functions-used-in-quickcheck-properties
 
 import System.IO.Unsafe
 
@@ -33,28 +31,29 @@ forall = flip all
 
 
 
--- ====== 1 ======== 
+-- =================================
+-- == Probability is uniform distribution check
+-- == 2:30:00
+-- =================================
 
 
-probabilityDistributionTest = do
-    print "Testing for even distribution in RNG"
-    randomFloats <- probs 10000
-    return (probsTest' randomFloats)
 
--- probsTest' :: Fractional a => [Float] -> a
+--probsTest' :: Fractional a => [Float] -> a
 probsTest' randomFloats = 
     let rangeCounts = countRanges randomFloats (0,0,0,0)
         validity = chiSquared rangeCounts (length randomFloats)
     in validity
 
--- chiSquared :: Fractional a => (Int,Int,Int,Int) -> Int -> a
+
+--chiSquared :: (Fractional a) => (Int,Int,Int,Int) -> Int -> a
 chiSquared (a,b,c,d) n = 
     let e = (fromIntegral n) / 4.0
         values = (a:b:c:d:[])
         chiSquaredValues = map (\x -> ((x - e)^2)/e) values
     in sum chiSquaredValues
 
--- countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
+--countRanges :: (Ord a1, Fractional a1, Num a) => [a1] -> (a, a, a, a) -> (a, a, a, a)
+--countRanges :: [Float] -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)
 countRanges [] (a,b,c,d) = (a,b,c,d)
 countRanges (x:xs) (a,b,c,d)
     | x < 0.25 = countRanges xs (a+1,b,c,d)
@@ -62,7 +61,38 @@ countRanges (x:xs) (a,b,c,d)
     | x < 0.75 = countRanges xs (a,b,c+1,d)
     | x < 1.0  = countRanges xs (a,b,c,d+1)
 
---TODO: add inRange for chi
+
+--https://en.wikipedia.org/wiki/Chi-squared_distribution 
+--we have 3 degress of freedom (4 bins), and we want p-value>0.05
+--verifyDistributionIsEven :: (Float a) => a -> Bool
+verifyDistributionIsEven value = value < 7.81
+
+
+{-
+probabilityDistributionTest :: IO ()
+probabilityDistributionTest = do
+    print "Testing for even distribution in random number generator"
+    randomFloats <- probs 10000
+    print $ "Chi-squared value: "
+    print (probsTest' randomFloats)
+    print $ " is within acceptable range?"
+    print $ verifyDistributionIsEven (probsTest' randomFloats)
+-}
+
+{-
+*Lab2> probabilityDistributionTest 
+"Testing for even distribution in random number generator"
+"Chi-squared value: "
+0.23839999999999997
+" is within acceptable range?"
+True
+-}
+
+
+-- =================================
+-- == Triangle classification 
+-- == 3:00:00
+-- =================================
 
 data Shape = NoTriangle | Equilateral 
            | Isosceles  | Rectangular | Other deriving (Eq,Show)
@@ -87,7 +117,6 @@ triangleHelper x y z
     | (x == y || x == z || y == z) = Isosceles
     | otherwise = Other
     
-
 
 -- helper function to get random integers in the domain [low, high]
 randInt' :: Int -> Int -> IO Int
@@ -202,7 +231,7 @@ Output: ["prop1","prop4","prop3","prop2"]
 
 --this solution works only IF there are no duplicates, for the solution with duplicates see below
 
---TODO: document me
+--checks if a given list is permutation of second one
 isPermutation :: Eq a => [a] -> [a] -> Bool
 isPermutation [] [] = True
 isPermutation [] _ = False
@@ -296,7 +325,8 @@ True
 -}
 
 -- =============================================
--- == Recognizing and Generating Derangements == 2:00:00
+-- == Recognizing and Generating Derangements 
+-- == 2:00:00
 -- =============================================
 
 -- only consider the two lists if their sorted versions are equivalent to each
@@ -359,6 +389,7 @@ derangementTests = do
 
 -- =============
 -- === ROT13 ===
+-- === 2:00:00
 -- =============
 
 
@@ -446,6 +477,7 @@ Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
 
 -- =============
 -- === IBAN ===
+-- === 6:00:00
 -- =============
 
 -- helper functions intToList and listToInt. these functions are each other's inversions. 
@@ -604,8 +636,6 @@ changeNthElement idx transform list
                     _ -> list    -- if the list doesn't have an element at index idx
 
 ----------------------
-
-
 
 --source: https://stackoverflow.com/a/31978353
 deleteAt idx xs = lft ++ rgt  where (lft, (_:rgt)) = splitAt idx xs
