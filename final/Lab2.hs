@@ -477,35 +477,33 @@ ibanValidCountry code = forall (take 2 code) (\x -> isUpper x && isLetter x)
 ibanValidChecksumFormat :: String -> Bool
 ibanValidChecksumFormat code = forall (take 2 $ drop 2 code) isDigit 
 
---moves initial 4 letters of IBAN to the end
-ibanMoveInitEnd :: String -> String
-ibanMoveInitEnd code =  let (a, b) = splitAt 4 code in b ++ a
-
 --determines IBAN offset for A-Z
 numberOffset :: Integer
 numberOffset = - (toInteger $ ord 'A') + 10
 
---converts numbers to numbers and uppercase letters to the range 10-35
-ibanStringExpand :: Char -> Integer
-ibanStringExpand letter = if isDigit letter then toInteger $ digitToInt letter 
-                          else (toInteger $ ord letter) + numberOffset
-
-
--- converts numbers >= 10 to their separate digits
--- 1 becomes [1], 1234 becomes [1,2,3,4]
---TODO JELLE: improve?
-ibanSplitIntArray :: [Integer] -> [Integer]
-ibanSplitIntArray [] = []
-ibanSplitIntArray (0:xs) = [0] ++ ibanSplitIntArray xs
-ibanSplitIntArray (x:xs) = intToList x ++ ibanSplitIntArray xs
-
--- ISO 7064 modulo check
-ibanCalcMod :: [Integer] -> Bool
-ibanCalcMod xs = (listToInt $ map toInteger xs) `mod` 97 == 1
 
 -- checks for valid IBAN according to ISO 7064 modulo check and IBAN format rules
+-- it first 
 ibanValidateModulo :: String -> Bool
-ibanValidateModulo code = ibanCalcMod $ ibanSplitIntArray $ map ibanStringExpand $ ibanMoveInitEnd code
+ibanValidateModulo iban = 
+    let (firstFour, leftover) = splitAt 4 iban
+        swappedFour = leftover ++ firstFour
+        intForm = stringToInt swappedFour
+    in (mod intForm 97) == 1
+
+stringToInt :: String -> Integer
+stringToInt string = stringToInt' string 0
+
+stringToInt' :: String -> Integer -> Integer
+stringToInt' [] n = n
+stringToInt' (x:xs) n = 
+    let value = charToValue x
+    in if value < 10 then stringToInt' xs (n*10 + value)
+        else stringToInt' xs (n*100 + value)
+
+charToValue :: Char -> Integer
+charToValue x = if not (isLetter x) then read [x] 
+    else (toInteger (ord x)) - (toInteger (ord 'A')) + 10
 
 --list of valid IBANs generated at https://www.mobilefish.com/services/random_iban_generator/random_iban_generator.php
 validIbans :: [String]
