@@ -116,4 +116,3 @@ convertIntoCNF (Impl f1 f2) = convertIntoCNF (Dsj [(Neg f1), f2])
 
 -- conversion of an equivalence is done by converting the disjunction of the conjunctives of negative and positive formulas
 convertIntoCNF (Equiv f1 f2) = convertIntoCNF (Dsj [(Cnj [f1, f2]), (Cnj [(Neg f1), (Neg f2)])])
-
