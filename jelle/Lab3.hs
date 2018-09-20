@@ -63,10 +63,18 @@ isLiteral (Prop _) = True
 isLiteral (Neg (Prop _)) = True
 isLiteral _ = False
 
+-- helper function to determine whether a Formula is a top-level Conjunction
+isCnj :: Form -> Bool
+isCnj (Cnj _) = True
+isCnj _ = False
+
 -- helper function to combine multiple conjunctions into one
 cnjCombiner :: Form -> [Form] -> Form
 cnjCombiner (Cnj acc) [] = (Cnj acc)
-cnjCombiner (Cnj acc) ((Cnj x):xs) = cnjCombiner (Cnj (acc ++ x)) xs 
+-- cnjCombiner (Cnj acc) ((Cnj x):xs) = cnjCombiner (Cnj (acc ++ x)) xs 
+cnjCombiner (Cnj acc) (x:xs) 
+    | isCnj x = cnjCombiner (Cnj (acc ++ [x])) xs
+    | isLiteral x = cnjCombiner (Cnj (acc ++ [x])) xs
 
 -- heper function that loops over all the forms in a list and packs all the literals in a Cnj
 cnjParse :: [Form] -> [Form]
