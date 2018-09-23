@@ -32,6 +32,18 @@ entails f1 f2 = and (zipWith (-->) (solutions f1) (solutions f2))
 equiv :: Form -> Form -> Bool
 equiv f1 f2 = entails f1 f2 && entails f1 f2
 
+test1 = do
+    print "Testing the functions checking formula types..."
+    print "Checking if (A ^ not(A)) is a contradiction..."
+    print (contradiction (Cnj [Prop 1, (Neg (Prop 1))]))
+    print "Checking if (A v not(A)) is a tautology..."
+    print (tautology (Dsj [Prop 1, (Neg (Prop 1))]))
+    print "Checking if (A ^ B) entails A..."
+    print (entails (Cnj [(Prop 1), (Prop 2)]) (Prop 1))
+    print "Checking if (A -> B) is equivalent to not(A) or B..."
+    print (equiv (Impl (Prop 1) (Prop 2)) (Dsj [(Neg (Prop 1)), (Prop 2)]))
+    print "If all functions returned True, test is passed"
+    
 
 -- ============================
 -- == 2: Parse Function Test ==
@@ -47,8 +59,6 @@ t3_1 = p
 t3_2 = (Neg p)
 t3_3 = (Neg (Neg p))
 t3_4 = (Cnj [p,q])
-
-isConjNormFormTest = (Cnj [Dsj [(Neg p), (Equiv p q)], Dsj [r, p, (Neg p)], Dsj [r, (Neg q)]])
 
 isConjNormForm :: Form -> Bool
 isConjNormForm (Cnj listOfClauses) = and (map isClause listOfClauses)
@@ -110,6 +120,12 @@ convertIntoCNF (Neg (Neg x)) = convertIntoCNF x
 -- negation of a conjunction or disjunction requires us to distribute the negation over the formula in the list
 convertIntoCNF (Neg (Cnj fs)) = convertIntoCNF (Dsj (map (\x -> (Neg x)) fs))
 convertIntoCNF (Neg (Dsj fs)) = convertIntoCNF (Cnj (map (\x -> (Neg x)) fs))
+
+-- negation of Implications and Equivalences require these to be converted first
+convertIntoCNF (Neg (Impl f1 f2)) = 
+    convertIntoCNF (Neg (convertIntoCNF (Impl f1 f2)))
+convertIntoCNF (Neg (Equiv f1 f2)) = 
+    convertIntoCNF (Neg (convertIntoCNF (Equiv f1 f2)))
 
 -- conversion of an implication is done by converting the equivalent formula: P -> Q = (-P v Q)
 convertIntoCNF (Impl f1 f2) = convertIntoCNF (Dsj [(Neg f1), f2])
