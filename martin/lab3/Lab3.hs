@@ -1,0 +1,443 @@
+module Lab3 where
+ 
+import Data.List
+import System.Random
+import Test.QuickCheck
+import Data.Char
+--import Lecture3
+
+forall :: [a] -> (a -> Bool) -> Bool
+forall = flip all
+
+
+
+contradiction :: Form -> Bool
+contradiction formula = forall (allVals formula) (\val -> not $ (evl val formula))
+
+tautology :: Form -> Bool
+tautology formula = forall (allVals formula) (\val -> (evl val formula))
+
+
+-- | logical entailment 
+entails :: Form -> Form -> Bool
+entails formulaA formulaB = forall (filter (\value -> evl value formulaB) (allVals formulaB)) (\value -> evl value formulaA )
+
+
+entails' formulaA formulaB = and $ zipWith (\b a -> evl b formulaB --> evl a formulaA ) (allVals formulaB) (allVals formulaA)
+
+--TODO: TEST ME
+
+-- | logical equivalence
+-- A |= B && B |= A --> A <=> B
+equiv, equiv' :: Form -> Form -> Bool
+equiv formulaA formulaB = entails formulaA formulaB && entails formulaB formulaA
+
+equiv' formulaA formulaB = 
+    let values = allVals formulaA in 
+        and $ zipWith (\a b -> a == b) --TODO: see if tests catch swapping == with &&
+        (map (\val -> (evl val formulaA)) values)
+        (map (\val -> (evl val formulaB)) values)
+    
+--TODO: TEST ME
+
+
+-- ex 1 no tests: 1hour
+
+
+-- ex 3
+
+cnf :: Form -> Form
+cnf formula = Cnj mappedLines
+    where 
+        nnfArrowFreeFormula = nnf $ arrowfree formula --TODO: maybe not even required
+        trueVals = filter (\val -> evl val nnfArrowFreeFormula) (allVals nnfArrowFreeFormula) --only get satisfied evaluations
+        mappedLines = map cnfLine trueVals --map each satisfied evaluation to list of clauses, with outer conjunction
+
+
+cnfLine :: Valuation -> Form
+cnfLine vx = Dsj (map cnfVar vx)
+
+cnfVar :: (Name,Bool) -> Form
+cnfVar (name, True) = Prop name
+cnfVar (name, False) = Neg (Prop name)
+
+
+-- ex 4
+
+data FormGenConnectives 
+    = Literal | Not | And | Or | Implies | Equivalent 
+    deriving (Eq,Ord, Enum, Show)
+
+
+--source: https://stackoverflow.com/a/25924694
+
+generateConnectiveValues :: (Enum a) => [a]
+generateConnectiveValues = enumFrom (toEnum 0)
+
+connectivesList :: [FormGenConnectives]
+connectivesList = generateConnectiveValues
+
+--form3 = Impl (Cnj [Impl p q, Impl q r]) (Impl p r)
+
+--andFormulaGenerator :: Int -> [Int] -> [FormGenConnectives] -> Form
+--andFormulaGenerator maxConnectives
+--    | (maxConnectives <= 0) = Prop 1
+--    | otherwise = Cnj [
+--        (andFormulaGenerator ((maxConnectives-1) `quot` 2)),
+--        (andFormulaGenerator ((maxConnectives-1) `quot` 2)) 
+--        ]
+
+
+
+--formulaGenerator :: Int -> [Int] -> [FormGenConnectives] -> Form
+--formulaGenerator maxConnectives paramOut (connective:connectives)
+--    | maxConnectives <= 0 = Prop connective
+--    | otherwise = 
+
+
+--quickCheckResult(\literals connectives -> equivalence ourformula jellesCNF(ourformula))
+
+formulaGenerator :: [Int] -> [Int] -> Form
+formulaGenerator literalsNum connectivesNum = 
+    let literalsNumAbs = map abs literalsNum
+        connectivesNumMod = map (\x -> (abs x) `mod` (length connectivesList)) connectivesNum
+        connectivesEnum = map toEnum  connectivesNumMod
+    in formulaGenerator' literalsNumAbs connectivesEnum
+
+
+--base case: next step has no more literals to output OR connectives
+
+formulaGenerator' :: [Int] -> [FormGenConnectives] -> Form
+formulaGenerator' [] _ = error "Out of connectives while attempting to output a connective"
+formulaGenerator' (literal:literals) connectives
+    | (null literals || null connectives) = Prop literal
+
+
+formulaGenerator' (literal:_) (Literal:connectives) = Prop literal
+
+
+--decrease connectives, keep literals, half of literals required on each side
+formulaGenerator' literals (And:connectives) = 
+    let (left, right) = formulaGeneratorSplit literals connectives in 
+    Cnj [left, right] 
+    
+formulaGenerator' literals (Or:connectives) =
+    let (left, right) = formulaGeneratorSplit literals connectives in 
+    Dsj [left, right]  
+
+formulaGenerator' literals (Implies:connectives) =
+    let (left, right) = formulaGeneratorSplit literals connectives in 
+    Impl left right  
+
+formulaGenerator' literals (Equivalent:connectives) =
+    let (left, right) = formulaGeneratorSplit literals connectives in 
+    Equiv left right
+
+--decrease connectives, keep literals
+formulaGenerator' literals (Not:connectives) = Neg left 
+    where
+    left = formulaGenerator' literals connectives
+
+formulaGeneratorSplit :: [Int] -> [FormGenConnectives] -> (Form, Form)
+formulaGeneratorSplit literals connectives = (left, right) 
+    where
+    halfListLiterals = splitHalf literals
+    halfListConnectives = splitHalf connectives
+    left = formulaGenerator' (fst halfListLiterals) (fst halfListConnectives)
+    right = formulaGenerator' (snd halfListLiterals) (snd halfListConnectives)
+
+
+--TODO: how to check?
+
+--time: 2:25h
+
+
+--source: https://stackoverflow.com/a/19074708
+splitHalf :: [a] -> ([a],[a])
+splitHalf l = splitAt ((length l + 1) `div` 2) l
+
+
+ 
+
+ -- bonus
+type Clause  = [Int]
+type Clauses = [Clause]
+
+
+--precondition: is CNF
+cnf2cls :: Form -> Clauses
+
+cnf2cls (Dsj formulas) = [(map cnf2cls'' formulas)] --TODO: better way? is this exhaustive?
+cnf2cls (Cnj form) = map cnf2cls' form 
+
+cnf2cls' :: Form -> Clause
+--TODO: can be just a ;; -a ??? clarify
+cnf2cls' (Prop name) = [name] --TODO: better way?
+cnf2cls' (Neg (Prop name)) = [-name] --TODO: better way?
+cnf2cls' (Dsj formulas) =  (map cnf2cls'' formulas)
+
+
+cnf2cls'' :: Form -> Int
+cnf2cls'' (Prop name) = name
+cnf2cls'' (Neg (Prop name)) = -name
+
+
+-- ======================================
+-- ======================================
+-- ======================================
+-- ======================================    
+
+infix 1 --> 
+(-->) :: Bool -> Bool -> Bool
+p --> q = (not p) || q
+
+infixl 2 #
+
+(#) :: (a -> b) -> (b -> c) -> (a -> c)
+(#) = flip (.)
+
+infixl 1 $$
+
+($$) :: a -> (a -> b) -> b
+($$) = flip ($)
+
+update :: Eq a => (a -> b) -> (a,b) -> a -> b
+update f (x,y) = \ z -> if x == z then y else f z 
+
+updates :: Eq a => (a -> b) -> [(a,b)] -> a -> b
+updates = foldl update 
+
+type Var = String
+type Env = Var -> Integer
+
+data Expr = I Integer
+          | V Var 
+          | Add Expr Expr 
+          | Subtr Expr Expr 
+          | Mult Expr Expr 
+          deriving (Eq,Show)
+
+eval :: Expr -> Env -> Integer 
+eval (I i) _ = i 
+eval (V name) env = env name
+eval (Add e1 e2) env = (eval e1 env) + (eval e2 env)
+eval (Subtr e1 e2) env = (eval e1 env) - (eval e2 env)
+eval (Mult e1 e2) env = (eval e1 env) * (eval e2 env)
+
+assign :: Var -> Expr -> Env -> Env 
+assign var expr env =  update env (var, eval expr env)
+
+initEnv :: Env 
+initEnv = \ _ -> undefined
+
+initE :: Env
+initE = const undefined
+
+example = initEnv $$ 
+          assign "x" (I 3) # 
+          assign "y" (I 5) # 
+          assign "x" (Mult (V "x") (V "y")) #
+          eval (V "x")
+
+while :: (a -> Bool) -> (a -> a) -> a -> a
+while = until . (not.)
+
+euclid m n = (m,n) $$
+   while (\ (x,y) -> x /= y) 
+         (\ (x,y) -> if x > y then (x-y,y) 
+                              else (x,y-x)) #
+         fst
+
+euclid' m n = fst $ eucl (m,n) where
+     eucl = until (uncurry  (==))
+         (\ (x,y) -> if x > y then (x-y,y) else (x,y-x))
+
+whiler :: (a -> Bool) -> (a -> a) -> (a -> b) -> a -> b
+whiler p f r = while p f # r
+
+euclid2 m n = (m,n) $$
+          whiler (\ (x,y) -> x /= y) 
+                 (\ (x,y) -> if x > y then (x-y,y) 
+                                      else (x,y-x))
+                 fst
+
+fibonacci :: Integer -> Integer
+fibonacci n = fibon (0,1,n) where
+  fibon = whiler 
+           (\ (_,_,n) -> n > 0)
+           (\ (x,y,n) -> (y,x+y,n-1))
+           (\ (x,_,_) -> x)
+
+fb :: Integer -> Integer
+fb n = fb' 0 1 n where 
+   fb' x y 0 = x 
+   fb' x y n = fb' y (x+y) (n-1)
+
+fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+
+type Name = Int
+
+data Form = Prop Name
+          | Neg  Form
+          | Cnj [Form]
+          | Dsj [Form]
+          | Impl Form Form 
+          | Equiv Form Form 
+          deriving (Eq,Ord)
+
+instance Show Form where 
+  show (Prop x)   = show x
+  show (Neg f)    = '-' : show f 
+  show (Cnj fs)     = "*(" ++ showLst fs ++ ")"
+  show (Dsj fs)     = "+(" ++ showLst fs ++ ")"
+  show (Impl f1 f2)  = "(" ++ show f1 ++ "==>" 
+                           ++ show f2 ++ ")"
+  show (Equiv f1 f2)  = "(" ++ show f1 ++ "<=>" 
+                           ++ show f2 ++ ")"
+
+showLst,showRest :: [Form] -> String
+showLst [] = ""
+showLst (f:fs) = show f ++ showRest fs
+showRest [] = ""
+showRest (f:fs) = ' ': show f ++ showRest fs
+
+p = Prop 1
+q = Prop 2
+r = Prop 3 
+
+form1 = Equiv (Impl p q) (Impl (Neg q) (Neg p))
+form2 = Equiv (Impl p q) (Impl (Neg p) (Neg q))
+form3 = Impl (Cnj [Impl p q, Impl q r]) (Impl p r)
+
+propNames :: Form -> [Name]
+propNames = sort.nub.pnames where 
+  pnames (Prop name) = [name]
+  pnames (Neg f)  = pnames f
+  pnames (Cnj fs) = concatMap pnames fs
+  pnames (Dsj fs) = concatMap pnames fs
+  pnames (Impl f1 f2)  = concatMap pnames [f1,f2]
+  pnames (Equiv f1 f2) = concatMap pnames [f1,f2]
+
+type Valuation = [(Name,Bool)]
+
+-- | all possible valuations for lists of prop letters
+genVals :: [Name] -> [Valuation]
+genVals [] = [[]]
+genVals (name:names) = 
+  map ((name,True) :) (genVals names)
+  ++ map ((name,False):) (genVals names)
+
+-- | generate all possible valuations for a formula
+allVals :: Form -> [Valuation]
+allVals = genVals . propNames
+
+type ValFct = Name -> Bool
+
+val2fct :: Valuation -> ValFct
+val2fct = updates (\ _ -> undefined)
+
+fct2val :: [Name] -> ValFct -> Valuation
+fct2val domain f = map (\x -> (x,f x)) domain 
+
+evl :: Valuation -> Form -> Bool
+evl [] (Prop c)    = error ("no info: " ++ show c)
+evl ((i,b):xs) (Prop c)
+     | c == i    = b
+     | otherwise = evl xs (Prop c)
+evl xs (Neg f)  = not (evl xs f)
+evl xs (Cnj fs) = all (evl xs) fs
+evl xs (Dsj fs) = any (evl xs) fs
+evl xs (Impl f1 f2) = evl xs f1 --> evl xs f2
+evl xs (Equiv f1 f2) = evl xs f1 == evl xs f2
+
+satisfiable :: Form -> Bool
+satisfiable f = any (\ v -> evl v f) (allVals f)
+
+data Token 
+      = TokenNeg
+      | TokenCnj
+      | TokenDsj
+      | TokenImpl
+      | TokenEquiv 
+      | TokenInt Int 
+      | TokenOP
+      | TokenCP
+ deriving (Show,Eq)
+
+lexer :: String -> [Token]
+lexer [] = []
+lexer (c:cs) | isSpace c = lexer cs
+             | isDigit c = lexNum (c:cs) 
+lexer ('(':cs) = TokenOP : lexer cs
+lexer (')':cs) = TokenCP : lexer cs
+lexer ('*':cs) = TokenCnj : lexer cs
+lexer ('+':cs) = TokenDsj : lexer cs
+lexer ('-':cs) = TokenNeg : lexer cs 
+lexer ('=':'=':'>':cs) = TokenImpl : lexer cs
+lexer ('<':'=':'>':cs) = TokenEquiv : lexer cs
+lexer (x:_) = error ("unknown token: " ++ [x])
+
+lexNum cs = TokenInt (read num) : lexer rest
+     where (num,rest) = span isDigit cs
+
+type Parser a b = [a] -> [(b,[a])]
+
+succeed :: b -> Parser a b
+succeed x xs = [(x,xs)]
+
+parseForm :: Parser Token Form 
+parseForm (TokenInt x: tokens) = [(Prop x,tokens)]
+parseForm (TokenNeg : tokens) =
+  [ (Neg f, rest) | (f,rest) <- parseForm tokens ]
+parseForm (TokenCnj : TokenOP : tokens) = 
+  [ (Cnj fs, rest) | (fs,rest) <- parseForms tokens ]
+parseForm (TokenDsj : TokenOP : tokens) = 
+  [ (Dsj fs, rest) | (fs,rest) <- parseForms tokens ]
+parseForm (TokenOP : tokens) = 
+  [ (Impl f1 f2, rest) | (f1,ys) <- parseForm tokens,
+                         (f2,rest) <- parseImpl ys ]
+   ++
+  [ (Equiv f1 f2, rest) | (f1,ys) <- parseForm tokens,
+                          (f2,rest) <- parseEquiv ys ] 
+parseForm tokens = []
+
+parseForms :: Parser Token [Form] 
+parseForms (TokenCP : tokens) = succeed [] tokens
+parseForms tokens = 
+   [(f:fs, rest) | (f,ys) <- parseForm tokens, 
+                   (fs,rest) <- parseForms ys ]
+
+parseImpl :: Parser Token Form
+parseImpl (TokenImpl : tokens) = 
+  [ (f,ys) | (f,y:ys) <- parseForm tokens, y == TokenCP ]
+parseImpl tokens = []
+
+parseEquiv :: Parser Token Form
+parseEquiv (TokenEquiv : tokens) = 
+  [ (f,ys) | (f,y:ys) <- parseForm tokens, y == TokenCP ]
+parseEquiv tokens = []
+
+parse :: String -> [Form]
+parse s = [ f | (f,_) <- parseForm (lexer s) ]
+
+arrowfree :: Form -> Form 
+arrowfree (Prop x) = Prop x 
+arrowfree (Neg f) = Neg (arrowfree f)
+arrowfree (Cnj fs) = Cnj (map arrowfree fs)
+arrowfree (Dsj fs) = Dsj (map arrowfree fs)
+arrowfree (Impl f1 f2) = 
+  Dsj [Neg (arrowfree f1), arrowfree f2]
+arrowfree (Equiv f1 f2) = 
+  Dsj [Cnj [f1', f2'], Cnj [Neg f1', Neg f2']]
+  where f1' = arrowfree f1
+        f2' = arrowfree f2
+
+nnf :: Form -> Form 
+nnf (Prop x) = Prop x
+nnf (Neg (Prop x)) = Neg (Prop x)
+nnf (Neg (Neg f)) = nnf f
+nnf (Cnj fs) = Cnj (map nnf fs)
+nnf (Dsj fs) = Dsj (map nnf fs)
+nnf (Neg (Cnj fs)) = Dsj (map (nnf.Neg) fs)
+nnf (Neg (Dsj fs)) = Cnj (map (nnf.Neg) fs)
+
