@@ -9,7 +9,7 @@ import Data.Char
 forall :: [a] -> (a -> Bool) -> Bool
 forall = flip all
 
-
+--- ##### ex1 : 2 hours
 
 contradiction :: Form -> Bool
 contradiction formula = forall (allVals formula) (\val -> not $ (evl val formula))
@@ -21,15 +21,13 @@ tautology formula = forall (allVals formula) (\val -> (evl val formula))
 -- | logical entailment 
 entails :: Form -> Form -> Bool
 entails formulaA formulaB = forall (filter (\value -> evl value formulaB) (allVals formulaB)) (\value -> evl value formulaA )
-
-
 entails' formulaA formulaB = and $ zipWith (\b a -> evl b formulaB --> evl a formulaA ) (allVals formulaB) (allVals formulaA)
 
 --TODO: TEST ME
 
 -- | logical equivalence
 -- A |= B && B |= A --> A <=> B
-equiv, equiv' :: Form -> Form -> Bool
+equiv, equiv', equiv'' :: Form -> Form -> Bool
 equiv formulaA formulaB = entails formulaA formulaB && entails formulaB formulaA
 
 equiv' formulaA formulaB = 
@@ -37,29 +35,82 @@ equiv' formulaA formulaB =
         and $ zipWith (\a b -> a == b) --TODO: see if tests catch swapping == with &&
         (map (\val -> (evl val formulaA)) values)
         (map (\val -> (evl val formulaB)) values)
-    
---TODO: TEST ME
 
 
--- ex 1 no tests: 1hour
+equiv'' formulaA formulaB = tautology $ Equiv formulaA formulaB
 
+
+
+--ex 1 manual test cases: 
+
+exercise1TestCases :: [(Bool, Bool)]
+exercise1TestCases = [
+        --(function args -> result, expected)
+        (equiv (Neg (Prop 1)) (Neg (Prop 1)), True),
+        (equiv form1 form1, True),
+        (equiv form1 form2, False),
+        (equiv form1 form3, False), -- <<MAJOR PROBLEM: only equiv'' works here, others fail with callstack error. WHY???
+        (equiv form2 form3, False),
+        (equiv form2 form2, True),
+        (equiv form3 form3, True)
+         --------------------------
+        --TODO: manually verify
+        --(contradiction form1, ),
+        --(contradiction form2, ),
+        --(contradiction form3, ),
+        --------------------------
+        --------------------------
+        --TODO: manually verify
+        --(tautology form1, ),
+        --(tautology form2, ),
+        --(tautology form3, ),
+        --------------------------
+        --TODO: entails test cases
+
+    ]
+
+exercise1ManualTestCaseVerifier :: [Bool]
+exercise1ManualTestCaseVerifier = map (\(actual, expected) -> actual == expected) exercise1TestCases
+
+
+parseString :: String -> Form
+parseString x = head $ parse x
+
+--ex 2:
+
+--TODO!!!!
 
 -- ex 3
 
 cnf :: Form -> Form
 cnf formula = Cnj mappedLines
     where 
-        nnfArrowFreeFormula = nnf $ arrowfree formula --TODO: maybe not even required
-        trueVals = filter (\val -> evl val nnfArrowFreeFormula) (allVals nnfArrowFreeFormula) --only get satisfied evaluations
-        mappedLines = map cnfLine trueVals --map each satisfied evaluation to list of clauses, with outer conjunction
+        --nnfArrowFreeFormula = nnf $ arrowfree formula --not required for truth table approach
+        falseVals = filter (\val -> not $ evl val formula) (allVals formula) --only get NON-satisfied evaluations
+        mappedLines = map cnfLine falseVals --map each satisfied evaluation to list of clauses, with outer conjunction
 
 
 cnfLine :: Valuation -> Form
 cnfLine vx = Dsj (map cnfVar vx)
 
 cnfVar :: (Name,Bool) -> Form
-cnfVar (name, True) = Prop name
-cnfVar (name, False) = Neg (Prop name)
+cnfVar (name, False) = Prop name
+cnfVar (name, True) = Neg (Prop name)
+
+
+--ex 3 *manual* tests: 
+
+exercise3ManualTestCases = [
+        --(original formula, expected result)
+        (Neg (Prop 1), Neg (Prop 1))
+    ]
+
+exercise3ManualTestCaseVerifier = map (\(original, expected) -> (let converted = cnf original in equiv expected original)) exercise3ManualTestCases
+
+exercise3ManualTestResults = do 
+    print "Testing manual test cases"
+    print (exercise3ManualTestCaseVerifier)
+    print "Exercise 3 automated QuickCheck tests are in exercise 4!"
 
 
 -- ex 4
@@ -70,32 +121,12 @@ data FormGenConnectives
 
 
 --source: https://stackoverflow.com/a/25924694
-
-generateConnectiveValues :: (Enum a) => [a]
-generateConnectiveValues = enumFrom (toEnum 0)
+generateEnumValuesGeneric  :: (Enum a) => [a]
+generateEnumValuesGeneric  = enumFrom (toEnum 0)
 
 connectivesList :: [FormGenConnectives]
-connectivesList = generateConnectiveValues
+connectivesList = generateEnumValuesGeneric
 
---form3 = Impl (Cnj [Impl p q, Impl q r]) (Impl p r)
-
---andFormulaGenerator :: Int -> [Int] -> [FormGenConnectives] -> Form
---andFormulaGenerator maxConnectives
---    | (maxConnectives <= 0) = Prop 1
---    | otherwise = Cnj [
---        (andFormulaGenerator ((maxConnectives-1) `quot` 2)),
---        (andFormulaGenerator ((maxConnectives-1) `quot` 2)) 
---        ]
-
-
-
---formulaGenerator :: Int -> [Int] -> [FormGenConnectives] -> Form
---formulaGenerator maxConnectives paramOut (connective:connectives)
---    | maxConnectives <= 0 = Prop connective
---    | otherwise = 
-
-
---quickCheckResult(\literals connectives -> equivalence ourformula jellesCNF(ourformula))
 
 formulaGenerator :: [Int] -> [Int] -> Form
 formulaGenerator literalsNum connectivesNum = 
@@ -147,16 +178,52 @@ formulaGeneratorSplit literals connectives = (left, right)
     right = formulaGenerator' (snd halfListLiterals) (snd halfListConnectives)
 
 
---TODO: how to check?
 
 --time: 2:25h
 
 
 --source: https://stackoverflow.com/a/19074708
+--splits list into almost even halves, with left side being larger by 1 if uneven
 splitHalf :: [a] -> ([a],[a])
 splitHalf l = splitAt ((length l + 1) `div` 2) l
 
 
+--testing properties
+
+
+
+--A, A v B, (A v B) & C, (A v B) & (A v B)
+
+isInCnfPropertyTopLevel (Prop _) = True
+isInCnfPropertyTopLevel (Neg (Prop _)) = True
+isInCnfPropertyTopLevel (Dsj inside) = and $ map isInCnfPropertyInsideLevel inside
+isInCnfPropertyTopLevel (Neg _) = False -- !(AvB), !(A&B), !(...)
+isInCnfPropertyTopLevel _ = False
+
+isInCnfPropertyInsideLevel (Prop _) = True
+isInCnfPropertyInsideLevel (Neg (Prop _)) = True
+isInCnfPropertyInsideLevel (Neg _) = False
+isInCnfPropertyInsideLevel (Cnj _) = False
+isInCnfPropertyInsideLevel _ = False
+
+--TODO: test is arrowfree, no -> or <->
+
+
+
+--quickcheck tests for 3 and 4
+
+automatedTestEx34 = do
+    print "Testing equivalance of QuickCheck generated formula and converted to CNF formula"
+    quickCheckResult(\literalsNum connectivesNum -> 
+        let formula = formulaGenerator literalsNum connectivesNum --TODO: restrict to at most ~30 list elements, complexity is probbly EXPTIME
+            cnfFormula = cnf formula
+        in (not $ null literalsNum) && (not $ null connectivesNum) --> (equiv'' formula cnfFormula ))
+
+
+
+
+--https://github.com/commercialhaskell/stack/issues/394
+--https://github.com/atom-haskell/ide-haskell/issues/152
  
 
  -- bonus
@@ -169,6 +236,8 @@ cnf2cls :: Form -> Clauses
 
 cnf2cls (Dsj formulas) = [(map cnf2cls'' formulas)] --TODO: better way? is this exhaustive?
 cnf2cls (Cnj form) = map cnf2cls' form 
+--cnf2cls (Neg (Prop name)) = [-name] --TODO: better way?
+--cnf2cls (Dsj formulas) =  (map cnf2cls' formulas)
 
 cnf2cls' :: Form -> Clause
 --TODO: can be just a ;; -a ??? clarify
@@ -177,9 +246,13 @@ cnf2cls' (Neg (Prop name)) = [-name] --TODO: better way?
 cnf2cls' (Dsj formulas) =  (map cnf2cls'' formulas)
 
 
+--converts single property (literal) or negated property 
 cnf2cls'' :: Form -> Int
 cnf2cls'' (Prop name) = name
 cnf2cls'' (Neg (Prop name)) = -name
+
+--TODO: tests
+
 
 
 -- ======================================
