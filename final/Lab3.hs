@@ -179,7 +179,8 @@ Test results:
 [True,True,True,True]
 -}
 
--- Test function for the CNF converter, it generates a random formula using the random generator in question 4, then checks if this formula is equivalent to whatever is produced by the converter. The output of this test case is included in the results in exercise 4.
+-- Test function for the CNF converter, it generates a random formula using the random generator in question 4, 
+-- then checks if this formula is equivalent to whatever is produced by the converter. The output of this test case is included in the results in exercise 4.
 testCNFConverter :: [Int] -> [Int] -> Bool
 testCNFConverter atoms connectives =
     let atomsAct = if length atoms /= 0 then take 10 atoms else [1]
@@ -328,22 +329,21 @@ Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
 
 
 -- =====================
--- == bonus @ 4 hours ==
+-- == bonus @ 6 hours ==
 -- =====================
 type Clause  = [Int]
 type Clauses = [Clause]
 
 --precondition: is CNF
 cnf2cls :: Form -> Clauses
-cnf2cls (Dsj formulas) = [(map cnf2cls'' formulas)] --TODO: better way? is this exhaustive?
-cnf2cls (Cnj form) = map cnf2cls' form 
---cnf2cls (Neg (Prop name)) = [-name] --TODO: better way?
---cnf2cls (Dsj formulas) =  (map cnf2cls' formulas)
+cnf2cls (Dsj formulas) = [(map cnf2cls'' formulas)]
+cnf2cls (Cnj form) = map cnf2cls' form
+cnf2cls (Prop name) = [[name]]
+cnf2cls (Neg (Prop name)) = [[-name]]
 
 cnf2cls' :: Form -> Clause
---TODO: can be just a ;; -a ??? clarify
-cnf2cls' (Prop name) = [name] --TODO: better way?
-cnf2cls' (Neg (Prop name)) = [-name] --TODO: better way?
+cnf2cls' (Prop name) = [name]
+cnf2cls' (Neg (Prop name)) = [-name]
 cnf2cls' (Dsj formulas) =  (map cnf2cls'' formulas)
 
 
@@ -355,8 +355,11 @@ cnf2cls'' (Neg (Prop name)) = -name
 
 cnf2clsTestCases :: [(Form, Clauses)]
 cnf2clsTestCases = [
-    (Dsj[Prop 5, Neg (Prop 6)],[[5,-6]]),
-    (Cnj[Prop 4, Dsj [Prop 5, Neg(Prop 6)]],[[4],[5,-6]])
+    (Dsj[Prop 5, Neg (Prop 6)],[[5,-6]]), -- 5 v 6
+    (Cnj[Prop 4, Dsj [Prop 5, Neg(Prop 6)]],[[4],[5,-6]]), -- 4 & (5 v -6)
+    (Cnj[Dsj[Prop 1, Prop 2], Dsj [Prop 5, Neg(Prop 6)]],[[1,2],[5,-6]]), -- (1 v 2) & (5 v -6)
+    (Prop 5, [[5]]), -- 5
+    (Neg(Prop 5), [[-5]]) -- -5
     ]
 
 
@@ -376,3 +379,4 @@ Test Results:
 True
 
 -}
+
