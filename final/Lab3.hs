@@ -352,4 +352,27 @@ cnf2cls'' :: Form -> Int
 cnf2cls'' (Prop name) = name
 cnf2cls'' (Neg (Prop name)) = -name
 
---TODO: tests
+
+cnf2clsTestCases :: [(Form, Clauses)]
+cnf2clsTestCases = [
+    (Dsj[Prop 5, Neg (Prop 6)],[[5,-6]]),
+    (Cnj[Prop 4, Dsj [Prop 5, Neg(Prop 6)]],[[4],[5,-6]])
+    ]
+
+
+cnf2clsTestCaseVerifier :: [Bool]
+cnf2clsTestCaseVerifier = map (\(cnfFormula, expected) -> let converted = cnf2cls cnfFormula in converted == expected) cnf2clsTestCases
+
+bonusTestCaseResult = do
+    print "Testing bonus exercise..."
+    print (and $ cnf2clsTestCaseVerifier)
+
+
+{-
+Test Results:
+
+*Lab3> bonusTestCaseResult
+"Testing bonus exercise..."
+True
+
+-}
