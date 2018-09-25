@@ -6,6 +6,8 @@ import Data.List
 import System.Random
 import Test.QuickCheck
 import Lecture3
+import System.IO.Unsafe
+
 
 -- =========================
 -- == 1: Formula Analysis == 60 mins
@@ -42,6 +44,8 @@ test1 = do
     print (entails (Cnj [(Prop 1), (Prop 2)]) (Prop 1))
     print "Checking if (A -> B) is equivalent to not(A) or B..."
     print (equiv (Impl (Prop 1) (Prop 2)) (Dsj [(Neg (Prop 1)), (Prop 2)]))
+    print "Checking if (A <=> B) is equivalent to ((not(A) and not(B)) or (A and B))"
+    print (equiv (Equiv (Prop 1) (Prop 2)) (Dsj [(Cnj [(Neg (Prop 1)), (Neg (Prop 2))]), (Cnj [(Prop 1), (Prop 2)])]))
     print "If all functions returned True, test is passed"
     
 
@@ -154,6 +158,7 @@ testCNFConverter atoms connectives =
 -- =================================
 -- == 4: Random Formula Generator ==
 -- =================================
+
 {- #####%%%%%%%######%%%%%%%%#####%%%%%%
 NOTE: This is not my own implementation, this was copied word for word from Martin's work. I only include this in my file because The code for the solution to Question 2 is dependent on it. The solution to question 2 is wholly my own work.
    #####%%%%%%%######%%%%%%%%#####%%%%%% -}
