@@ -13,8 +13,7 @@ import System.Random
 forall :: [a] -> (a -> Bool) -> Bool
 forall = flip all
 
---- ##### ex1
-
+-- exercise 1
 contradiction :: Form -> Bool
 contradiction formula = forall (allVals formula) (\val -> not $ (evl val formula))
 
@@ -30,13 +29,21 @@ entails' formulaA formulaB = and $ zipWith (\b a -> evl b formulaB --> evl a for
 equiv :: Form -> Form -> Bool
 equiv formulaA formulaB = entails formulaA formulaB && entails formulaB formulaA
 
--- ex 2:
---compare 2 Strings with equivalence
--- generate Formular (Form) with generator -> convert to String (show)-> parse and check equivalence
+-- exercise  2:
+--compare 2 Strings with equivalence, generate Formular (Form) with generator (exercise 4) -> convert to String (show)-> parse and check equivalence
 
-checkEquivalance n m  = equiv formular (head(parse (show (formular))))
-  where formular= formulaGenerator [1..abs n] [1..abs m]
--- ex 4
+maxNum :: Int --determines the maximun number of literals and connectives
+maxNum = 20
+
+checkEquivalance n = equiv formula (head(parse (show (formula))))
+  where formula= formulaGenerator [0..((abs n) `mod` maxNum)] [0..((abs n) `mod`maxNum)]
+
+  -- Test:  quickCheck checkEquivalence
+
+-- exercise 3
+-- conversion of formulas into CNF
+
+-- exercise 4
 
 data FormGenConnectives 
     = Literal | Not | And | Or | Implies | Equivalent 
