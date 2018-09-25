@@ -86,6 +86,22 @@ exercise1TestResults = do
     print (and exercise1ManualTestCaseVerifier)
     print "If all of the above returned True, the test was succesful"
 
+{- Test Results:
+*Lab3> exercise1TestResults 
+"Testing the functions checking formula types..."
+"Checking if (A ^ not(A)) is a contradiction..."
+True
+"Checking if (A v not(A)) is a tautology..."
+True
+"Checking if (A ^ B) entails A..."
+True
+"Checking if (A -> B) is equivalent to not(A) or B..."
+True
+"Checking other manual test cases..."
+True
+"If all of the above returned True, the test was succesful"
+-}
+
 
 -- ============================
 -- == 2: Parse Function Test == 2:30 hours
@@ -108,15 +124,12 @@ parseTester atoms connectives =
         else equiv (head parsedFormula) generatedFormula
 
 
-
 -- ====================================
 -- == 3: Conjunctive Normal Function == 6 hours
 -- ====================================
 
-
 --in this Haskell implementation '*()' is always true, but is not valid formula
 cnfTautologyStatement = (Dsj [Neg (Prop 1), Prop 1])
-
 
 --converts a formula to CNF formula
 cnf :: Form -> Form
@@ -127,7 +140,6 @@ cnf formula
         falseVals = filter (\val -> not $ evl val formula) (allVals formula) --only get NON-satisfied evaluations
         mappedLines = map cnfLine falseVals --map each satisfied evaluation to list of clauses, with outer conjunction
 
-
 --converts one valuation to CNF clause
 cnfLine :: Valuation -> Form
 cnfLine vx = Dsj (map cnfVar vx)
@@ -137,8 +149,9 @@ cnfVar :: (Name,Bool) -> Form
 cnfVar (name, False) = Prop name
 cnfVar (name, True) = Neg (Prop name)
 
-
---exercise 3 manual tests: 
+-- %%%%%
+-- %%  Testing
+-- %%%%%
 exercise3ManualTestCases = [
         --(original formula, expected result)
         (Neg (Prop 1), Neg (Prop 1)),
@@ -154,12 +167,18 @@ exercise3ManualTestResults = do
     print (exercise3ManualTestCaseVerifier)
     print "Exercise 3 automated QuickCheck tests are in exercise 4!"
 
+{-
+Test results:
+*Lab3> exercise3ManualTestResults 
+"Testing manual test cases"
+[True,True,True,True]
+-}
 
--- Test function for the CNF converter, it generates a random formula using the random generator in question 4, then checks if this formula is equivalent to whatever is produced by the converter.
+-- Test function for the CNF converter, it generates a random formula using the random generator in question 4, then checks if this formula is equivalent to whatever is produced by the converter. The output of this test case is included in the results in exercise 4.
 testCNFConverter :: [Int] -> [Int] -> Bool
 testCNFConverter atoms connectives =
-    let atomsAct = if length atoms /= 0 then take 20 atoms else [1]
-        connectivesAct = if length connectives /= 0 then take 20 connectives else [1]
+    let atomsAct = if length atoms /= 0 then take 10 atoms else [1]
+        connectivesAct = if length connectives /= 0 then take 10 connectives else [1]
         generatedFormula = formulaGenerator atomsAct connectivesAct
         parsedFormula = cnf generatedFormula
     in equiv parsedFormula generatedFormula
@@ -285,14 +304,29 @@ automatedTestEx34 = do
         let formula = formulaGenerator (take 10 literalsNum) (take 10 connectivesNum)
             cnfFormula = cnf formula
         in (not $ null literalsNum) && (not $ null connectivesNum) --> (isConjNormForm cnfFormula ))
+    print "Testing the Conjunctive Normal Form converter using quickCheck..."
+    quickCheckResult(\literalsNum connectivesNum -> testCNFConverter literalsNum connectivesNum)
+
+{-
+Test Results:
+*Lab3> automatedTestEx34 
+"Testing equivalance of QuickCheck generated formula and converted to CNF formula"
++++ OK, passed 100 tests.
+"Testing arrowfreeness of converted CNF formula"
++++ OK, passed 100 tests.
+"Testing format of converted CNF formula being in CNF (no negated clauses, no nesting, ...) "
++++ OK, passed 100 tests.
+"Testing the Conjunctive Normal Form converter using quickCheck..."
++++ OK, passed 100 tests.
+Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
+-}
 
 
-
-
- -- bonus @ 4 hours
+-- =====================
+-- == bonus @ 4 hours ==
+-- =====================
 type Clause  = [Int]
 type Clauses = [Clause]
-
 
 --precondition: is CNF
 cnf2cls :: Form -> Clauses
