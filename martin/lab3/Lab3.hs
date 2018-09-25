@@ -218,7 +218,13 @@ automatedTestEx34 = do
         let formula = formulaGenerator literalsNum connectivesNum --TODO: restrict to at most ~30 list elements, complexity is probbly EXPTIME
             cnfFormula = cnf formula
         in (not $ null literalsNum) && (not $ null connectivesNum) --> (equiv'' formula cnfFormula ))
-
+    print "Testing arrowfreeness of converted CNF formula"
+    print "TODO"
+    print "Testing format of converted CNF formula: no negated clauses, no Cnj inside inner clauses, ..."
+    quickCheckResult(\literalsNum connectivesNum -> 
+        let formula = formulaGenerator literalsNum connectivesNum --TODO: restrict to at most ~30 list elements, complexity is probbly EXPTIME
+            cnfFormula = cnf formula
+        in (not $ null literalsNum) && (not $ null connectivesNum) --> (isInCnfPropertyTopLevel cnfFormula ))
 
 
 
@@ -226,7 +232,7 @@ automatedTestEx34 = do
 --https://github.com/atom-haskell/ide-haskell/issues/152
  
 
- -- bonus
+ -- bonus @ 4 hours
 type Clause  = [Int]
 type Clauses = [Clause]
 
