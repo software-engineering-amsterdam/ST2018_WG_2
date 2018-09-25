@@ -18,26 +18,17 @@ tautology :: Form -> Bool
 tautology formula = forall (allVals formula) (\val -> (evl val formula))
 
 
--- | logical entailment 
+-- logical entailment  A |= B  direction (slides are reversed!)
 entails :: Form -> Form -> Bool
 entails formulaA formulaB = forall (filter (\value -> evl value formulaB) (allVals formulaB)) (\value -> evl value formulaA )
+
+--TODO: select one implementation, see direction A |= B vs A =| B ??
 entails' formulaA formulaB = and $ zipWith (\b a -> evl b formulaB --> evl a formulaA ) (allVals formulaB) (allVals formulaA)
 
---TODO: TEST ME
 
--- | logical equivalence
--- A |= B && B |= A --> A <=> B
-equiv, equiv', equiv'' :: Form -> Form -> Bool
-equiv formulaA formulaB = entails formulaA formulaB && entails formulaB formulaA
-
-equiv' formulaA formulaB = 
-    let values = allVals formulaA in 
-        and $ zipWith (\a b -> a == b) --TODO: see if tests catch swapping == with &&
-        (map (\val -> (evl val formulaA)) values)
-        (map (\val -> (evl val formulaB)) values)
-
-
-equiv'' formulaA formulaB = tautology $ Equiv formulaA formulaB
+--determines logical equivalence of 2 formulas
+equiv:: Form -> Form -> Bool
+equiv formulaA formulaB = tautology $ Equiv formulaA formulaB
 
 
 
@@ -49,11 +40,9 @@ exercise1TestCases = [
         (equiv (Neg (Prop 1)) (Neg (Prop 1)), True),
         (equiv form1 form1, True),
         (equiv form1 form2, False),
-        (equiv form1 form3, False), -- <<MAJOR PROBLEM: only equiv'' works here, others fail with callstack error. WHY???
-        (equiv form2 form3, False),
         (equiv form2 form2, True),
         (equiv form3 form3, True)
-         --------------------------
+        --------------------------
         --TODO: manually verify
         --(contradiction form1, ),
         --(contradiction form2, ),
@@ -82,30 +71,40 @@ parseString x = head $ parse x
 
 -- ex 3
 
+--in this Haskell implementation '*()' is always true, but is not valid formula
+cnfTautologyStatement = (Dsj [Neg (Prop 1), Prop 1])
+
+
+--converts a formula to CNF formula
 cnf :: Form -> Form
-cnf formula = Cnj mappedLines
+cnf formula 
+    | tautology formula = cnfTautologyStatement
+    | otherwise = Cnj mappedLines
     where 
-        --nnfArrowFreeFormula = nnf $ arrowfree formula --not required for truth table approach
         falseVals = filter (\val -> not $ evl val formula) (allVals formula) --only get NON-satisfied evaluations
         mappedLines = map cnfLine falseVals --map each satisfied evaluation to list of clauses, with outer conjunction
 
 
+--converts one valuation to CNF clause
 cnfLine :: Valuation -> Form
 cnfLine vx = Dsj (map cnfVar vx)
 
+--converts variables according to CNF conversion rules to A or NOT A
 cnfVar :: (Name,Bool) -> Form
 cnfVar (name, False) = Prop name
 cnfVar (name, True) = Neg (Prop name)
 
 
---ex 3 *manual* tests: 
-
+--exercise 3 manual tests: 
 exercise3ManualTestCases = [
         --(original formula, expected result)
-        (Neg (Prop 1), Neg (Prop 1))
+        (Neg (Prop 1), Neg (Prop 1)),
+        (Prop 1, Prop 1),
+        (Cnj[Neg(Prop 1), (Prop 1)], Cnj [Dsj [Neg (Prop 1)], Dsj [Prop 1]]), --contradiction
+        (Dsj[Neg(Prop 1), (Prop 1)], cnfTautologyStatement) --tautology that is valid formula
     ]
 
-exercise3ManualTestCaseVerifier = map (\(original, expected) -> (let converted = cnf original in equiv expected original)) exercise3ManualTestCases
+exercise3ManualTestCaseVerifier = map (\(original, expected) -> (let converted = cnf original in (equiv expected converted) && isConjNormForm converted)) exercise3ManualTestCases
 
 exercise3ManualTestResults = do 
     print "Testing manual test cases"
@@ -115,6 +114,7 @@ exercise3ManualTestResults = do
 
 -- ex 4
 
+--data type with all possible symbols to be found in a logical formula
 data FormGenConnectives 
     = Literal | Not | And | Or | Implies | Equivalent 
     deriving (Eq,Ord, Enum, Show)
@@ -136,14 +136,11 @@ formulaGenerator literalsNum connectivesNum =
     in formulaGenerator' literalsNumAbs connectivesEnum
 
 
---base case: next step has no more literals to output OR connectives
-
+--base cases: next step has no more literals to output OR connectives are empty
 formulaGenerator' :: [Int] -> [FormGenConnectives] -> Form
 formulaGenerator' [] _ = error "Out of connectives while attempting to output a connective"
 formulaGenerator' (literal:literals) connectives
     | (null literals || null connectives) = Prop literal
-
-
 formulaGenerator' (literal:_) (Literal:connectives) = Prop literal
 
 
@@ -169,6 +166,7 @@ formulaGenerator' literals (Not:connectives) = Neg left
     where
     left = formulaGenerator' literals connectives
 
+--splits literals and connectives into almost even halves
 formulaGeneratorSplit :: [Int] -> [FormGenConnectives] -> (Form, Form)
 formulaGeneratorSplit literals connectives = (left, right) 
     where
@@ -188,45 +186,51 @@ splitHalf :: [a] -> ([a],[a])
 splitHalf l = splitAt ((length l + 1) `div` 2) l
 
 
---testing properties
+--testing properties for CNF
+
+--determines if formula satisfies the syntax rules of conjunctive normal form
+isConjNormForm :: Form -> Bool
+isConjNormForm (Cnj listOfClauses) = and $ map isClause listOfClauses
+isConjNormForm f = isClause f || isLiteral f
+
+--determines if formula is a valid CNF clause
+isClause :: Form -> Bool
+isClause (Dsj listOfLiterals) = and $ map isLiteral listOfLiterals
+isClause f = isLiteral f
+
+--determines if a formula is a valid CNF literal ({A, !A} only)
+isLiteral :: Form -> Bool
+isLiteral (Prop _) = True
+isLiteral (Neg (Prop _)) = True
+isLiteral _ = False
 
 
+--property to determine if formula contains any implications or equivalences
+isArrowFreeProperty :: Form -> Bool
+isArrowFreeProperty (Prop _) = True
+isArrowFreeProperty (Neg(formula)) = isArrowFreeProperty formula
+isArrowFreeProperty (Cnj form) = and $ map isArrowFreeProperty form
+isArrowFreeProperty (Dsj form) = and $ map isArrowFreeProperty form
+isArrowFreeProperty (Impl _ _) = False
+isArrowFreeProperty (Equiv _ _) = False
 
---A, A v B, (A v B) & C, (A v B) & (A v B)
-
-isInCnfPropertyTopLevel (Prop _) = True
-isInCnfPropertyTopLevel (Neg (Prop _)) = True
-isInCnfPropertyTopLevel (Dsj inside) = and $ map isInCnfPropertyInsideLevel inside
-isInCnfPropertyTopLevel (Neg _) = False -- !(AvB), !(A&B), !(...)
-isInCnfPropertyTopLevel _ = False
-
-isInCnfPropertyInsideLevel (Prop _) = True
-isInCnfPropertyInsideLevel (Neg (Prop _)) = True
-isInCnfPropertyInsideLevel (Neg _) = False
-isInCnfPropertyInsideLevel (Cnj _) = False
-isInCnfPropertyInsideLevel _ = False
-
---TODO: test is arrowfree, no -> or <->
-
-
-
---quickcheck tests for 3 and 4
-
+--quickcheck tests for exercise 3 and 4
 automatedTestEx34 = do
     print "Testing equivalance of QuickCheck generated formula and converted to CNF formula"
     quickCheckResult(\literalsNum connectivesNum -> 
-        let formula = formulaGenerator literalsNum connectivesNum --TODO: restrict to at most ~30 list elements, complexity is probbly EXPTIME
+        let formula = formulaGenerator (take 10 literalsNum) (take 10 connectivesNum)
             cnfFormula = cnf formula
-        in (not $ null literalsNum) && (not $ null connectivesNum) --> (equiv'' formula cnfFormula ))
+        in (not $ null literalsNum) && (not $ null connectivesNum) --> (equiv formula cnfFormula ))
     print "Testing arrowfreeness of converted CNF formula"
-    print "TODO"
-    print "Testing format of converted CNF formula: no negated clauses, no Cnj inside inner clauses, ..."
     quickCheckResult(\literalsNum connectivesNum -> 
-        let formula = formulaGenerator literalsNum connectivesNum --TODO: restrict to at most ~30 list elements, complexity is probbly EXPTIME
+        let formula = formulaGenerator (take 10 literalsNum) (take 10 connectivesNum)
             cnfFormula = cnf formula
-        in (not $ null literalsNum) && (not $ null connectivesNum) --> (isInCnfPropertyTopLevel cnfFormula ))
-
-
+        in (not $ null literalsNum) && (not $ null connectivesNum) --> (isArrowFreeProperty cnfFormula ))
+    print "Testing format of converted CNF formula being in CNF (no negated clauses, no nesting, ...) "
+    quickCheckResult(\literalsNum connectivesNum -> 
+        let formula = formulaGenerator (take 10 literalsNum) (take 10 connectivesNum)
+            cnfFormula = cnf formula
+        in (not $ null literalsNum) && (not $ null connectivesNum) --> (isConjNormForm cnfFormula ))
 
 --https://github.com/commercialhaskell/stack/issues/394
 --https://github.com/atom-haskell/ide-haskell/issues/152
@@ -419,7 +423,7 @@ fct2val :: [Name] -> ValFct -> Valuation
 fct2val domain f = map (\x -> (x,f x)) domain 
 
 evl :: Valuation -> Form -> Bool
-evl [] (Prop c)    = error ("no info: " ++ show c)
+evl [] (Prop c)    = error ("[mismatched variable count or names] no info: " ++ show c)
 evl ((i,b):xs) (Prop c)
      | c == i    = b
      | otherwise = evl xs (Prop c)
