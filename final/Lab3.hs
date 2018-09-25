@@ -32,20 +32,13 @@ tautology f = and $ solutions f
 entails :: Form -> Form -> Bool
 entails f1 f2 = and $ zipWith (-->) (solutions f1) (solutions f2)
 
---entails' :: Form -> Form -> Bool
---entails' formulaA formulaB = forall (filter (\value -> evl value formulaB) (allVals formulaB)) (\value -> evl value formulaA )
-
---TODO: select one implementation, see direction A |= B vs A =| B ??
---entails'' formulaA formulaB = and $ zipWith (\b a -> evl b formulaB --> evl a formulaA ) (allVals formulaB) (allVals formulaA)
-
-
 --determines logical equivalence of 2 formulas
 equiv:: Form -> Form -> Bool
 equiv formulaA formulaB = tautology $ Equiv formulaA formulaB
 
-
---ex 1 manual test cases: 
-
+-- %%%%%
+-- %%  Testing
+-- %%%%%
 contradictionExample = Cnj [(Prop 1), Neg(Prop 1)]
 
 exercise1TestCases :: [(Bool, Bool)]
@@ -79,10 +72,7 @@ exercise1TestCases = [
 exercise1ManualTestCaseVerifier :: [Bool]
 exercise1ManualTestCaseVerifier = map (\(actual, expected) -> actual == expected) exercise1TestCases
 
-
 exercise1TestResults = do 
-    print "Tests for exercise 1"
-    print (and $ exercise1ManualTestCaseVerifier)
     print "Testing the functions checking formula types..."
     print "Checking if (A ^ not(A)) is a contradiction..."
     print (contradiction (Cnj [Prop 1, (Neg (Prop 1))]))
@@ -92,12 +82,9 @@ exercise1TestResults = do
     print (entails (Cnj [(Prop 1), (Prop 2)]) (Prop 1))
     print "Checking if (A -> B) is equivalent to not(A) or B..."
     print (equiv (Impl (Prop 1) (Prop 2)) (Dsj [(Neg (Prop 1)), (Prop 2)]))
-    print "If all functions returned True, test is passed"
-
-
-parseString :: String -> Form
-parseString x = head $ parse x
-
+    print "Checking other manual test cases..."
+    print (and exercise1ManualTestCaseVerifier)
+    print "If all of the above returned True, the test was succesful"
 
 
 -- ============================
