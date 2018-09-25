@@ -8,7 +8,7 @@ import Test.QuickCheck
 import Lecture3
 
 -- =========================
--- == 1: Formula Analysis == 35 mins
+-- == 1: Formula Analysis == 60 mins
 -- =========================
 
 -- helper function that evaluates all valuations for a given formula by applying 
@@ -46,7 +46,7 @@ test1 = do
     
 
 -- ============================
--- == 2: Parse Function Test ==
+-- == 2: Parse Function Test == 45 minutes
 -- ============================
 {-
 To test the parse function, we use our homemade formulagenerator. If we generate a formula instantiated by random values provided by quickcheck, then convert this formula to a string using the provided show implementation, we can parse the string and see if the result is equivalent to our original. We convert the lists of Ints provided by quickcheck to lists of length at least one (Our formula generator doesn't like empty lists) and at most 20 (to preserve computability in acceptable time). If at any point the parser gives a result list of length other than 1, this means either our formula generator messed up or the parser function is broken. If we ever encounter a set of formulas that are not equivalent, this also means something is not right. But, the only way we encounter only passing tests, is if our generator and parser are both correct. Using the query:
@@ -65,13 +65,11 @@ parseTester atoms connectives =
         else equiv (head parsedFormula) generatedFormula
 
 -- ====================================
--- == 3: Conjunctive Normal Function ==
+-- == 3: Conjunctive Normal Function == 6 hours
 -- ====================================
 
-t3_1 = p
-t3_2 = (Neg p)
-t3_3 = (Neg (Neg p))
-t3_4 = (Cnj [p,q])
+-- Approach is inspired by https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
+-- Tried to implement this algorithm in Haskell, this works in some cases but as soon as the function become deeper and the function has to recurse more than two layers it des not work properly. This is because the function doesn't handle multiple conjunction and disjunction reassembly well.
 
 isConjNormForm :: Form -> Bool
 isConjNormForm (Cnj listOfClauses) = and (map isClause listOfClauses)
@@ -135,10 +133,8 @@ convertIntoCNF (Neg (Cnj fs)) = convertIntoCNF (Dsj (map (\x -> (Neg x)) fs))
 convertIntoCNF (Neg (Dsj fs)) = convertIntoCNF (Cnj (map (\x -> (Neg x)) fs))
 
 -- negation of Implications and Equivalences require these to be converted first
-convertIntoCNF (Neg (Impl f1 f2)) = 
-    convertIntoCNF (Neg (convertIntoCNF (Impl f1 f2)))
-convertIntoCNF (Neg (Equiv f1 f2)) = 
-    convertIntoCNF (Neg (convertIntoCNF (Equiv f1 f2)))
+convertIntoCNF (Neg (Impl f1 f2)) = convertIntoCNF (Neg (convertIntoCNF (Impl f1 f2)))
+convertIntoCNF (Neg (Equiv f1 f2)) = convertIntoCNF (Neg (convertIntoCNF (Equiv f1 f2)))
 
 -- conversion of an implication is done by converting the equivalent formula: P -> Q = (-P v Q)
 convertIntoCNF (Impl f1 f2) = convertIntoCNF (Dsj [(Neg f1), f2])
@@ -146,8 +142,21 @@ convertIntoCNF (Impl f1 f2) = convertIntoCNF (Dsj [(Neg f1), f2])
 -- conversion of an equivalence is done by converting the disjunction of the conjunctives of negative and positive formulas
 convertIntoCNF (Equiv f1 f2) = convertIntoCNF (Dsj [(Cnj [f1, f2]), (Cnj [(Neg f1), (Neg f2)])])
 
--- ex 4
+-- Test function for the CNF converter, it generates a random formula using the random generator in question 4, then checks if this formula is equivalent to whatever is produced by the converter. The test succeeds on average 15 times before failing.
+testCNFConverter :: [Int] -> [Int] -> Bool
+testCNFConverter atoms connectives =
+    let atomsAct = if length atoms /= 0 then take 20 atoms else [1]
+        connectivesAct = if length connectives /= 0 then take 20 connectives else [1]
+        generatedFormula = formulaGenerator atomsAct connectivesAct
+        parsedFormula = convertIntoCNF generatedFormula
+    in equiv parsedFormula generatedFormula
 
+-- =================================
+-- == 4: Random Formula Generator ==
+-- =================================
+{- #####%%%%%%%######%%%%%%%%#####%%%%%%
+NOTE: This is not my own implementation, this was copied word for word from Martin's work. I only include this in my file because The code for the solution to Question 2 is dependent on it. The solution to question 2 is wholly my own work.
+   #####%%%%%%%######%%%%%%%%#####%%%%%% -}
 data FormGenConnectives 
     = Literal | Not | And | Or | Implies | Equivalent 
     deriving (Eq,Ord, Enum, Show)
@@ -209,11 +218,6 @@ formulaGeneratorSplit literals connectives = (left, right)
     halfListConnectives = splitHalf connectives
     left = formulaGenerator' (fst halfListLiterals) (fst halfListConnectives)
     right = formulaGenerator' (snd halfListLiterals) (snd halfListConnectives)
-
-
-
---time: 2:25h
-
 
 --source: https://stackoverflow.com/a/19074708
 --splits list into almost even halves, with left side being larger by 1 if uneven
