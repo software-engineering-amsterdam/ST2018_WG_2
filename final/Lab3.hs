@@ -32,13 +32,23 @@ tautology f = and $ solutions f
 entails :: Form -> Form -> Bool
 entails f1 f2 = and $ zipWith (-->) (solutions f1) (solutions f2)
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 --determines logical equivalence of 2 formulas
 equiv:: Form -> Form -> Bool
 equiv formulaA formulaB = tautology $ Equiv formulaA formulaB
 
+<<<<<<< Updated upstream
 -- %%%%%
 -- %%  Testing
 -- %%%%%
+=======
+
+--ex 1 manual test cases: 
+contradictionExample:: Form
+>>>>>>> Stashed changes
 contradictionExample = Cnj [(Prop 1), Neg(Prop 1)]
 
 exercise1TestCases :: [(Bool, Bool)]

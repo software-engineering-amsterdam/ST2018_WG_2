@@ -43,18 +43,18 @@ exercise1TestCases = [
         (equiv form2 form2, True),
         (equiv form3 form3, True)
         --------------------------
-        --TODO: manually verify
-        --(contradiction form1, ),
-        --(contradiction form2, ),
-        --(contradiction form3, ),
+        (contradiction form1, ),
+        (contradiction form2, ),
+        (contradiction form3, ),
+        (contradiction cnfTautologyStatement, False)
         --------------------------
         --------------------------
-        --TODO: manually verify
-        --(tautology form1, ),
-        --(tautology form2, ),
-        --(tautology form3, ),
+        (tautology form1, ),
+        (tautology form2, ),
+        (tautology form3, ),
+        (tautology cnfTautologyStatement, True)
         --------------------------
-        --TODO: entails test cases
+        ()
 
     ]
 
