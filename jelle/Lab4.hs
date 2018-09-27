@@ -53,6 +53,8 @@ myDiff :: (Ord a) => Set a -> Set a -> Set a
 myDiff (Set set1) (Set set2) = 
     (Set [x | x <- (set1 ++ set2), not((x `elem` set2) && (x `elem` set1))])
 
+-- @TODO tests
+
 
 -- =================================
 -- === 4: Qustions Chapter 5 ==== 1 hours
@@ -115,6 +117,8 @@ Test results:
 +++ OK, passed 100 tests.
 -}
 
+-- @TODO write symClosQuickTest
+
 
 -- ======================================
 -- === 8: sym(tr(R)) =?= tr (sym(R)) ====
@@ -134,13 +138,5 @@ sym $ tr [(0,1)] = sym [(0,1),(1,0)] = [(0,0),(0,1),(1,0),(1,1)]
 tr $ sym [(0,1)] = tr [(0,1)]        = [(0,1),(1,0)]
 These two are not the same, hence a valid counterexample, hence there is a difference between the transitive of the symmetric and the symmetric of the transitive.
 -}
-
-hisx20 :: [[Char]]
-hisx20 = addAhi [] 20
-
-
-addAhi :: [[Char]] -> Int -> [[Char]]
-addAhi currentHis 0 = currentHis
-addAhi currentHis x = ("Hi!":(addAhi currentHis (x-1)))
 
 
