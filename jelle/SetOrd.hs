@@ -17,10 +17,10 @@ showSet (x:xs) str = showChar '{' ( shows x ( showl xs str))
      where showl []     str = showChar '}' str
            showl (x:xs) str = showChar ',' (shows x (showl xs str))
 
-emptySet  :: Set a       
+emptySet  :: Set a
 emptySet = Set []
 
-isEmpty  :: Set a -> Bool            
+isEmpty  :: Set a -> Bool
 isEmpty (Set []) = True
 isEmpty _        = False
 
