@@ -4,6 +4,7 @@ import Data.List
 import System.Random
 import Test.QuickCheck  
 import SetOrd
+import System.Random
 
 
 {-
@@ -11,18 +12,15 @@ Implement a random data generator for the datatype Set Int, where Set is as defi
 (Deliverables: two random test generators, indication of time spent.)
 -}
 
-
+{-
 arbitraryList :: Arbitrary a => Gen [a]
 arbitraryList =
   sized $
     \n -> do
       k <- choose (0, n)
       sequence [ arbitrary | _ <- [1..k] ]
+-}
 
-
---source: http://geekyplatypus.com/y-u-have-no-code-samples-quickcheck/
---source: https://begriffs.com/posts/2017-01-14-design-use-quickcheck.html
---source: https://www.stackbuilders.com/news/a-quickcheck-tutorial-generators
 
 {-
 instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
@@ -34,19 +32,43 @@ instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
 -}
 
 
---working implementation for set generation
 
 --sample $ (arbitrary :: Gen (Set Int))
 
 --time: 1:30h
 
+--source: Lab2.hs
+
+--TODO: ensure the list length is == n?
+
+generateProbSetList :: Int -> IO [Int]
+generateProbSetList 0 = return []
+generateProbSetList n = do
+             randomInt <- randomRIO (1, 1000)
+             restOfList <- generateProbSetList (n-1) 
+             if elem randomInt restOfList 
+                then return restOfList 
+                else return (sort $ (randomInt:restOfList))
+            --return (randomInt:restOfList)
+
+
+
+generateRandomSet maxLength = do 
+    set <- generateProbSetList maxLength
+    return (Set set) 
+
+
+--source: http://geekyplatypus.com/y-u-have-no-code-samples-quickcheck/
+--source: https://begriffs.com/posts/2017-01-14-design-use-quickcheck.html
+--source: https://www.stackbuilders.com/news/a-quickcheck-tutorial-generators
+
+--add support for QuickCheck arbitrary set generation
+--TODO: add sized $ ... 
 instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
     arbitrary  = 
                 do
                     list <- arbitrary
                     return $ Set (sort $ nub $ list)
-
-
 
 
 
@@ -82,17 +104,6 @@ setDifference (Set (a:ax)) setB = if (inSet a setB) then setDifference (Set ax) 
 
 
 
-{-
-setDifference a b = setDifference' a b (emptySet)
-
-setDifference' :: Ord a => Set a -> Set a -> Set a -> Set a
-setDifference' (Set []) _ result = result
-setDifference' (Set (a:ax)) bx result = 
-    if (inSet a bx) then setDifference' (Set ax) bx result 
-        else setDifference' (Set ax) bx (insertSet a result)
-
--}
-
 
 
 -- =================================
@@ -120,17 +131,11 @@ symClos ((a,b):xs) =
 
 {-
 Use the datatype for relations from the previous exercise, plus
-> infixr 5 @@
-> 
-> (@@) :: Eq a => Rel a -> Rel a -> Rel a
-> r @@ s = 
->   nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
+
 to define a function
 
  trClos :: Ord a => Rel a -> Rel a 
 that gives the transitive closure of a relation, represented as an ordered list of pairs. E.g., trClos [(1,2),(2,3),(3,4)] should give [(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)].
-
-(Deliverable: Haskell program, indication of time spent.)
 -}
 
 
@@ -143,7 +148,6 @@ r @@ s = nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
 --source: Lecture4.hs
 while :: (a -> Bool) -> (a -> a) -> a -> a
 while = until . (not.)
-
 
 
 --computes the transitive closure of a relationship
@@ -177,3 +181,16 @@ isRelationshipSymetric :: Ord a => Rel a -> Bool
 isRelationshipSymetric list = forall list (\(a,b) -> elem (b,a) list)
 
 --1:45hrs 6+7 no tests
+
+
+{-
+Test the functions symClos and trClos from the previous exercises. Devise your own test method for this. Try to use random test generation. Define reasonable properties to test. Can you use QuickCheck? How?
+-}
+
+{-
+exercise7ManualTestCases = [
+    (trClos [], [])
+    ]
+
+exercise7ManualTestCaseVerifier = map (\(actual, expected) -> actual == expected) exercise7ManualTestCases
+-}

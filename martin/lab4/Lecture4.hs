@@ -53,7 +53,12 @@ data Statement = Ass Var Expr
                | Cond Condition Statement Statement
                | Seq [Statement]
                | While Condition Statement
-               deriving (Eq,Show)
+               deriving (Eq)
+
+
+instance Show Statement where
+  show (Ass e1 e2) = (show e1) ++ " := " ++ (show e2)
+  show (Cond condition statement1 statement2) = "if (" ++ (show condition) ++ ") then: " ++ (show statement1) ++ "\n\telse " ++ (show statement2)
 
 evalc :: Condition -> Env -> Bool
 evalc (Eq e1 e2) env = eval e1 env == eval e2 env
