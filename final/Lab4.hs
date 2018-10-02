@@ -7,8 +7,9 @@ import SetOrd
 import Lecture4
 
 -- =================================
--- === 1: Qustions Chapter 4 ==== 2,5 hours
+-- === 1: Questions Chapter 4 ==== 1:30 hours (average)
 -- =================================
+-- Group: Resolved most questions between each other with explanation
 -- JM: I have found no points that cause difficulty of understanding
 -- MS: No questions
 -- KL: -- p. 120 The Russell Paradox proof
@@ -25,7 +26,8 @@ import Lecture4
 -- EV: 
 
 -- ======================================
--- === 2: Random IntSet Generator ==== 1 hours
+-- === 2: Random IntSet Generator ==== 5 hours
+-- === Most of the time spent on reading about monads and finding out how QC generators work
 -- ======================================
 
 
@@ -62,6 +64,7 @@ exercise2 = do
     sample $ (arbitrary :: Gen (Set Int))
 
 
+--TEST REPORT
 -- *Lab4> exercise2
 -- "Set generator based on Lab 2, produces single set with <= 20 elements: "
 -- {112,185,200,209,220,247,260,274,371,413,511,639,649,672,689,710,714,729,869,892}
@@ -81,7 +84,7 @@ exercise2 = do
 
 
 -- =========================================
--- === 3: intersect, union, and diff ==== 1:00 hours
+-- === 3: intersect, union, and diff ==== 2:00 hours
 -- =========================================
 -- The intersection of a set can be computed as all of the elements of set1 that also occur in set2
 setIntersection :: (Ord a) => Set a -> Set a -> Set a
@@ -124,6 +127,7 @@ forall = flip all
 
 -- no duplicates in results, verifies that the underlying
 -- data structure invariant was preserved
+setInvariantNoDuplicatesProperty :: Eq a => Set a -> Bool
 setInvariantNoDuplicatesProperty (Set []) = True
 setInvariantNoDuplicatesProperty (Set (x:xs)) = if elem x xs then False else setInvariantNoDuplicatesProperty (Set xs)
 
@@ -143,18 +147,22 @@ exercise3 = do
     print "Testing properties of set intersection using QuickCheck..."
     quickCheckResult(\setA setB -> propertyIntersectionElem setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
     quickCheckResult(\setA setB -> propertyIntersectionLength setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> setInvariantNoDuplicatesProperty (setIntersection (setA::(Set Int)) (setB::(Set Int))))
 
 
     print "Testing properties of set union using QuickCheck..."
     quickCheckResult(\setA setB -> propertyUnionElem setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
     quickCheckResult(\setA setB -> propertyUnionLength setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> setInvariantNoDuplicatesProperty (setUnion (setA::(Set Int)) (setB::(Set Int))))
 
     print "Testing properties of set difference using QuickCheck..."
     quickCheckResult(\setA setB -> propertyDifferenceElem setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
     quickCheckResult(\setA setB -> propertyDifferenceLength setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> setInvariantNoDuplicatesProperty (setDifference (setA::(Set Int)) (setB::(Set Int))))
 
 
--- *Lab4> exercise3 
+--TEST REPORT
+-- *Lab4> exercise3
 -- "Testing properties of set intersection using own generator..."
 -- True
 -- True
@@ -167,23 +175,26 @@ exercise3 = do
 -- "Testing properties of set intersection using QuickCheck..."
 -- +++ OK, passed 100 tests.
 -- +++ OK, passed 100 tests.
+-- +++ OK, passed 100 tests.
 -- "Testing properties of set union using QuickCheck..."
+-- +++ OK, passed 100 tests.
 -- +++ OK, passed 100 tests.
 -- +++ OK, passed 100 tests.
 -- "Testing properties of set difference using QuickCheck..."
 -- +++ OK, passed 100 tests.
 -- +++ OK, passed 100 tests.
+-- +++ OK, passed 100 tests.
 -- Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
+-- *Lab4> 
 
 
 
 -- =================================
--- === 4: Questions Chapter 5 ==== 1 hours
+-- === 4: Questions Chapter 5 ==== 1 hours (average)
 -- =================================
--- JM: I have found no points that cause difficulty of understanding
--- MS: No question
--- KL: 
--- EV: 
+-- Question: Difference between 'R_{<=}' and '<=', is it only notation?
+-- Question: Equivalence classes: Example 5.76, what is the modulo equivalence? 
+-- Question: How can we define 'equivalence modulo ~' ? 
 
 -- ================================
 -- === 5: SymClos Relations ==== 20 mins
@@ -220,46 +231,49 @@ trClos a = fp' trClosFunc a
 isTransitive :: (Eq a) => Rel a -> Bool
 isTransitive r = (length [(a,d) | (a,b) <- r, (c,d) <- r, b == c, not((a,d) `elem` r)]) == 0
 
--- helper function to determine whether a Realtion is symmetric.
+-- helper function to determine whether a Relation is symmetric.
 isSymmetric :: (Eq a) => Rel a -> Bool
-isSymmetric r = (length [(b,a) | (a,b) <- r, not((b,a) `elem` r)]) == 0
+isSymmetric r = forall r (\(a,b) -> elem (b,a) r)
+
+--tests if rleationship is a set (duplicate free)
+isDuplicateFree :: Eq a => Rel a -> Bool
+isDuplicateFree list = (length $ nub list) == (length list)
 
 -- helper function to determine whether a closure is actually a closure, we test this by seeing if the removal of any element from the relation gives a relation for which the funciton still holds. If this is the case, we have an extra element that is unnecessary, so our closure is not perfect. We exempt relation with only one or zero elements, since these are closures per definition 
 isClosure :: (Eq a) => (Rel a -> Bool) -> Rel a -> Rel a -> Bool
 isClosure function original r = 
     original == r || (length r < 2) || (not $ and $ map function [delete x r | x <- r])
 
--- trClosTest takes a list of integer tuples that will be transformed into a set. Since this list will be generated by quickCheck, we are going to have to make sure the lists aren't overly long, a max of 20 items should do it. When we have our testSet, we generate the transitive closure by using our trClos function. We test its validity by checking whether the original set is a subset of the result, the result is transitive, and we see if we remove any element from the newly added items (the difference of the original and the closure) the result is still transitive. If this last one is the case, we haven't found the best closure possible and our implementation is flawed.
+{- trClosTest takes a list of integer tuples that will be transformed into a set. 
+This list will be generated by quickCheck. When we have our testSet, we generate the transitive closure by using our trClos function. 
+We test its validity by checking whether the original set is a subset of the result, the result is transitive, and we see if we remove any element from the newly added items 
+(the difference of the original and the closure) the result is still transitive. 
+If this last one is the case, we haven't found the best closure possible and our implementation is flawed.
+-}
+
 trClosTest :: (Eq a, Ord a) => Rel a -> Bool
 trClosTest relation =
     let transitiveClosure = trClos relation
     in  subSet (Set relation) (Set transitiveClosure) && 
         isTransitive transitiveClosure &&
-        isClosure isTransitive relation transitiveClosure
+        isClosure isTransitive relation transitiveClosure &&
+        isDuplicateFree transitiveClosure
 
 
-
-{-
-Test results:
-*Lab4> quickCheck trClosQuickTest 
-+++ OK, passed 100 tests.
+{- symClosTest takes a list of integer tuples that will be transformed into a set. 
+This list will be generated by quickCheck. When we have our testSet, we generate the symmetric closure by using our symClos function. 
+We test its validity by checking whether the original set is a subset of the result, the result is symmetric, and we see if we remove any element from the newly added items (the difference of the original and the closure) the result is still symmetric. 
+If this last one is the case, we haven't found the best closure possible and our implementation is flawed.
 -}
-
--- symClosTest takes a list of integer tuples that will be transformed into a set. Since this list will be generated by quickCheck, we are going to have to make sure the lists aren't overly long, a max of 20 items should do it. When we have our testSet, we generate the symmetric closure by using our symClos function. We test its validity by checking whether the original set is a subset of the result, the result is symmetric, and we see if we remove any element from the newly added items (the difference of the original and the closure) the result is still symmetric. If this last one is the case, we haven't found the best closure possible and our implementation is flawed.
 symClosTest :: (Eq a, Ord a) => Rel a -> Bool
 symClosTest relation =
     let symmetricClosure = symClos relation
     in  subSet (Set relation) (Set symmetricClosure) && 
         isSymmetric symmetricClosure && 
-        isClosure isSymmetric relation symmetricClosure
+        isClosure isSymmetric relation symmetricClosure && 
+        isDuplicateFree symmetricClosure
 
 
-
-{-
-Test results:
-*Lab4> quickCheck symClosQuickTest 
-+++ OK, passed 100 tests.
--}
 
 exercise7 = do
     print "Testing properties of symetric closure"
