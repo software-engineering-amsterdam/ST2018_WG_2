@@ -195,6 +195,9 @@ exercise3 = do
 -- Question: Difference between 'R_{<=}' and '<=', is it only notation?
 -- Question: Equivalence classes: Example 5.76, what is the modulo equivalence? 
 -- Question: How can we define 'equivalence modulo ~' ? 
+-- how to solve: p. 166 ex 17
+-- p. 167 ex 23
+-- p. 171 ex 36
 
 -- ================================
 -- === 5: SymClos Relations ==== 20 mins
