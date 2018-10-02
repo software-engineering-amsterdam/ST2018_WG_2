@@ -55,3 +55,25 @@ differencePropertyElement (Set a) (Set b) = (not $ subSet (Set b) (setDifference
 
 
 --no duplicates
+
+
+--questions Chapter 4
+
+-- p. 120 The Russell Paradox proof
+-- p. 121 ex. 4.6 and 4.7
+-- p. 125 ex. 4.8 + Remark
+-- p.126 ex. 4.11
+-- p. 134 notation last line of exercise 4.25 + ex. 4.27
+-- p. 135 ex. 29-35
+-- p. 137 defining ordered pairs, Notation? Why is that so?
+-- p. 139 Prelude type
+-- p. 142 first Haskell part, why do they do it? Just a definition?
+-- p. 144 ex. 47
+-- p. 158 haskell part
+
+
+-- questions Chapter 5
+-- p. 166 ex 17
+-- p. 167 ex 23
+-- p. 171 ex 36
+-- 
