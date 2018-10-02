@@ -16,6 +16,10 @@ import System.IO.Unsafe
 -- === 2: Random IntSet Generator ==== 1 hours
 -- ======================================
 
+-- ============
+-- Generator 1
+-- ============
+
 -- helper function to get random function
 randInt' :: Int -> Int -> IO Int
 randInt' low high = do
@@ -52,6 +56,43 @@ Test Result:
 *Lab4> quickCheck randomSetTest 
 +++ OK, passed 100 tests.
 -}
+
+-- ============
+-- Generator 2
+-- ============
+
+--adds support for QuickCheck arbitrary set generation
+instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
+    arbitrary  = 
+                do
+                    list <- arbitrary
+                    return $ list2set list
+
+-- generator 2 tester
+exercise2 = do 
+    print "Set generator based on Lab 2, produces single set with <= 20 elements: "
+    print randomSet
+    print "Set generator using Arbitrary, compatible with QuickCheck, used in later tests."
+    print "Sample of generated sets: "
+    sample $ (arbitrary :: Gen (Set Int))
+
+-- *Lab4> exercise2 
+-- "Set generator based on Lab 2, produces single set with <= 20 elements: "
+-- {6,11,16,20,23,30,41,50,72,74,83,84,86,89,91}
+-- "Set generator using Arbitrary, compatible with QuickCheck, used in later tests."
+-- "Sample of generated sets: "
+-- {}
+-- {-1}
+-- {}
+-- {-2,0,5,6}
+-- {2}
+-- {-7,-5,-4,-3,0,5,6,8}
+-- {-10,4,7}
+-- {-13,-10,-1,1,3,4,5,6,10,12}
+-- {1,7,12,13}
+-- {-17,-16,-14,-9,-8,-7,-5,-4,1,4,6,7,10,14,16,18}
+-- {-20,-10,-5,-4,3,7,10,13,16,18}
+
 
 -- =========================================
 -- === 3: intersect, union, and diff ==== 20 mins
