@@ -51,22 +51,23 @@ exercise2 = do
     print "Sample of generated sets: "
     sample $ (arbitrary :: Gen (Set Int))
 
--- *Lab4> exercise2 
+
+-- *Lab4> exercise2
 -- "Set generator based on Lab 2, produces single set with <= 20 elements: "
--- {6,11,16,20,23,30,41,50,72,74,83,84,86,89,91}
+-- {112,185,200,209,220,247,260,274,371,413,511,639,649,672,689,710,714,729,869,892}
 -- "Set generator using Arbitrary, compatible with QuickCheck, used in later tests."
 -- "Sample of generated sets: "
 -- {}
--- {-1}
+-- {-2}
 -- {}
--- {-2,0,5,6}
+-- {-5,-1,1}
 -- {2}
--- {-7,-5,-4,-3,0,5,6,8}
--- {-10,4,7}
--- {-13,-10,-1,1,3,4,5,6,10,12}
--- {1,7,12,13}
--- {-17,-16,-14,-9,-8,-7,-5,-4,1,4,6,7,10,14,16,18}
--- {-20,-10,-5,-4,3,7,10,13,16,18}
+-- {-1,6,8}
+-- {-10,-8,-7,-4,-1,4,5,6,8,9}
+-- {-14,-11,-7,5,11}
+-- {13}
+-- {-15,-14,-12,-9,-3,2,10}
+-- {-20,-17,-16,-14,-10,-6,-4,-1,3,4,12,19}
 
 
 -- =========================================
@@ -141,6 +142,30 @@ exercise3 = do
     print "Testing properties of set difference using QuickCheck..."
     quickCheckResult(\setA setB -> propertyDifferenceElem setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
     quickCheckResult(\setA setB -> propertyDifferenceLength setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
+
+
+-- *Lab4> exercise3 
+-- "Testing properties of set intersection using own generator..."
+-- True
+-- True
+-- "Testing properties of set union using own generator..."
+-- True
+-- True
+-- "Testing properties of set difference using own generator..."
+-- True
+-- True
+-- "Testing properties of set intersection using QuickCheck..."
+-- +++ OK, passed 100 tests.
+-- +++ OK, passed 100 tests.
+-- "Testing properties of set union using QuickCheck..."
+-- +++ OK, passed 100 tests.
+-- +++ OK, passed 100 tests.
+-- "Testing properties of set difference using QuickCheck..."
+-- +++ OK, passed 100 tests.
+-- +++ OK, passed 100 tests.
+-- Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
+
+
 
 -- =================================
 -- === 4: Questions Chapter 5 ==== 1 hours
@@ -233,6 +258,16 @@ exercise7 = do
     print "Testing properties of transitive closure"
     quickCheckResult(\originalRel -> trClosTest (symClos (originalRel::(Rel Int))))
 
+{-
+*Lab4> exercise7
+"Testing properties of symetric closure"
++++ OK, passed 100 tests.
+"Testing properties of transitive closure"
++++ OK, passed 100 tests.
+Success {numTests = 100, labels = [], output = "+++ OK, passed 100 tests.\n"}
+*Lab4> 
+
+-}
 
 -- ======================================
 -- === 8: sym(tr(R)) =?= tr (sym(R)) ====
