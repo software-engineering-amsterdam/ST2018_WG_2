@@ -3,7 +3,7 @@ module Lab4 where
 import Data.List
 import System.Random
 import Test.QuickCheck  
---import SetOrd
+import SetOrd
 import System.Random
 import Data.List (sort) 
 
@@ -11,40 +11,15 @@ import Data.List (sort)
 
 -- ============================
 -- == Ex 1: Chapter 4
--- == Time: 0:00 hours
+-- == Time: 0:45 hours
 -- ============================
 
 {-
 Questions: 
+1. Is it possible to ever have 'a = {a}' in Haskell? 
 -}
 
 
-{-
-arbitraryList :: Arbitrary a => Gen [a]
-arbitraryList =
-  sized $
-    \n -> do
-      k <- choose (0, n)
-      sequence [ arbitrary | _ <- [1..k] ]
--}
-
-
-{-
-instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
-    arbitrary  = 
-        sized $ \len -> do
-                    actualLen <- choose (0, len)
-                    list <- while (\(Set x) -> length x < actualLen) (insertSet arbitrary) (Set [])
-                    return (Set list)
--}
-
-
-
---time: 1:30h
-
---source: Lab2.hs
-
---TODO: ensure the list length is == n?
 
 -- ============================
 -- == Ex 2: Two generators
@@ -72,7 +47,6 @@ http://geekyplatypus.com/y-u-have-no-code-samples-quickcheck/
 https://begriffs.com/posts/2017-01-14-design-use-quickcheck.html
 https://www.stackbuilders.com/news/a-quickcheck-tutorial-generators
 -}
---TODO: add sized $ ... 
 
 -- ============
 -- Generator 2
@@ -122,21 +96,28 @@ setDifference (Set (a:ax)) setB = if (inSet a setB) then setDifference (Set ax) 
     else insertSet a (setDifference (Set ax) setB)
 
 
---Test-Properties - Intersection
-testIntersection setA setB = (intersectionPropertyLength setA setB) && (intersectionPropertyElements setA setB)
-intersectionPropertyLength setA setB = ((length $ set2List $ setIntersection setA setB) <= (length $ set2List setA)) && ((length $ set2List $ setIntersection setA setB) <= (length $ set2List setB))
-intersectionPropertyElements setA setB = subSet (setIntersection setA setB) setA && subSet (setIntersection setA setB) setB
-
---Test-Properties - Union
-unionPropertyLength (Set a) (Set b) = ((length $ set2List $ setUnion (Set a) (Set b)) >= length a ) && (length $ set2List $ setUnion (Set a) (Set b)) >= length b && (length $ set2List $ setUnion (Set a) (Set b)) >= (length a + length b)
-unionPropertyElements  (Set a) (Set b)=  subSet (Set a) (setUnion (Set a) (Set b)) && subSet (Set b) (setUnion (Set a) (Set b))
-
 set2List :: Set z -> [z]
 set2List (Set a) = a
 
---Test-Properties - Difference
-differencePropertyLength (Set a) (Set b) = (length $ set2List $ setDifference (Set a) (Set b)) <= length a
-differencePropertyElement (Set a) (Set b) = (not $ subSet (Set b) (setDifference (Set a) (Set b))) && subSet (setDifference (Set a) (Set b)) (Set a)
+propertyIntersectionElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyIntersectionElem (Set a) (Set b) (Set res) = forall res (\x -> elem x a) && forall b (\x -> elem x b)
+
+propertyIntersectionLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyIntersectionLength (Set a) (Set b) (Set res) =  (length res <= length a) && (length res <= length b)
+
+propertyUnionElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyUnionElem (Set a) (Set b) (Set res) =  forall res (\x -> elem x a || elem x b)
+
+propertyUnionLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyUnionLength (Set a) (Set b) (Set res) = ((max (length a) (length b)) <= (length res))  && (length res <= (length a + length b))
+
+
+propertyDifferenceElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyDifferenceElem (Set a) (Set b) (Set res) =  forall res (\x -> (elem x a) && (not $ elem x b)) 
+
+propertyDifferenceLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyDifferenceLength (Set a) (Set b) (Set res) = (length res) <= (length a)
+
 
 
 -- no duplicates in results, verifies that the underlying
@@ -146,20 +127,38 @@ setInvariantNoDuplicatesProperty (Set (x:xs)) = if elem x xs then False else set
 
 exercise3 = do 
     print "Testing properties of set intersection using own generator..."
+    setA <- generateRandomSet 10
+    setB <- generateRandomSet 5
+    print $ propertyIntersectionElem setA setB (setIntersection setA setB)
+    print $ propertyIntersectionLength setA setB (setIntersection setA setB)
     print "Testing properties of set union using own generator..."
+    print $ propertyUnionElem setA setB (setUnion setA setB)
+    print $ propertyUnionLength setA setB (setUnion setA setB)
     print "Testing properties of set difference using own generator..."
+    print $ propertyDifferenceElem setA setB (setDifference setA setB)
+    print $ propertyDifferenceLength setA setB (setDifference setA setB)
 
     print "Testing properties of set intersection using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyIntersectionElem setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyIntersectionLength setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
+
+
     print "Testing properties of set union using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyUnionElem setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyUnionLength setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
+
     print "Testing properties of set difference using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyDifferenceElem setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyDifferenceLength setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
 
 -- ============================
 -- == Ex 4: Chapter 5
--- == Time: 0:00 hours
+-- == Time: 1:00 hours
 -- ============================
 
 {-
 Questions: 
+1. Difference between 'R_{<=}' and '<=', is it only notation?
 -}
 
 
@@ -175,7 +174,7 @@ type Rel a = [(a,a)]
 --computes the symmetric closure of a relationship
 symClos :: Ord a => Rel a -> Rel a
 symClos [] = []
-symClos ((a,b):xs) = nub $ -- required to handle when input is [(x,y), ..., (y,x)] 
+symClos ((a,b):xs) = nub $ -- required to handle when input is [(x,y), ..., (y,x)]
     if (b,a) `elem` xs || a == b then (a,b):symClos xs --keep (a,b) and recurse
         else (a,b):(b,a):(symClos xs) --keep (a,b), add (b,a) and recurse
 
@@ -210,16 +209,6 @@ fp :: Eq a => (a -> a) -> a -> a
 fp f = until (\ x -> x == f x) f
 
 
---source: Lecture4.hs
---while :: (a -> Bool) -> (a -> a) -> a -> a
---while = until . (not.)
-
---helper function to compute transitive closure
---precondition: x = sort $ nub x
---trClosureHelper :: Ord a => Rel a -> Rel a 
---trClosureHelper input = while (\x -> x /= computeOneStepTransitivity x) computeOneStepTransitivity input
-
-
 -- ============================
 -- == Ex 7: Tests for exercise 5 and 6
 -- == Time: 3:00 hours
@@ -246,22 +235,6 @@ isRelationshipTransitive list = containsAll (list @@ list) list
 isRelationshipSymmetric :: Ord a => Rel a -> Bool
 isRelationshipSymmetric list = forall list (\(a,b) -> elem (b,a) list)
 
-{-
-generateRandomTuple :: IO((Int,Int))
-generateRandomTuple = do 
-    x <- randomRIO (1, 1000)
-    y <- randomRIO (1, 1000)
-    return (x,y)
-
-generateRandomRel :: Int -> IO (Rel Int)
-generateRandomRel 1 = do 
-    tuple <- generateRandomTuple
-    return ([tuple])
-generateRandomRel n = do
-             randomTuple <- generateRandomTuple
-             restOfList <- generateRandomRel (n-1) 
-             return (randomTuple:restOfList)
--}
 
 --helper function to convert each (a,b) to (b,a)
 invertRel :: (Ord a, Eq a) => Rel a -> Rel a
@@ -274,13 +247,6 @@ mergeRel [] b = b
 mergeRel a [] = a
 mergeRel a b = nub (a ++ b)
 
---TODO: not same as containsAll?
---tests if left list is subset of right list
-listSubSet :: Eq a => [a] -> [a] -> Bool
-listSubSet [] [] = True
-listSubSet (a:_) [] = False
-listSubSet [] (b:_) = True
-listSubSet (a:ax) b = if elem a b then listSubSet ax b else False
 
 exercise7TestCases :: [(Rel Int, Rel Int)]
 exercise7TestCases = [
@@ -288,10 +254,8 @@ exercise7TestCases = [
     --tests for symetric closure
     (symClos [(1,2)], [(1,2),(2,1)]),
     (symClos [(2,1),(1,2)], [(1,2),(2,1)]),
-    --TODO
 
     --tests for transitive closure
-    --TODO
     (trClos [(1,2),(2,3),(3,4)],[(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)])
     ]
 
@@ -299,102 +263,37 @@ exercise7TestCaseVerifier :: [Bool]
 exercise7TestCaseVerifier = map (\(input, expected) -> (sort input) == (sort expected)) exercise7TestCases
 
 
-exercise67Results = do 
+exercise7Results = do 
     print "Testing symmetric closure being symetric using QuickCheck"
     quickCheckResult(\originalRel -> 
         let mergedInverse = mergeRel (originalRel::(Rel Int)) (invertRel originalRel) 
             in (sort $ nub mergedInverse::(Rel Int)) == (sort $ symClos originalRel) )
     quickCheckResult(\originalRel -> isRelationshipSymmetric (symClos (originalRel::(Rel Int))))
     print "Testing symmetric closure being superset of original relationship..."
-    quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in listSubSet uniqueRel (symClos (uniqueRel::(Rel Int))))
+    quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in containsAll uniqueRel (symClos (uniqueRel::(Rel Int))))
     print "Testing symmetric closure being a set"
     quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in isRelationshipDuplicateFree (symClos (uniqueRel::(Rel Int))))
 
     print "Testing transitive closure being transitive..."
     quickCheckResult(\originalRel -> isRelationshipTransitive $ trClos (originalRel::(Rel Int)) )
     print "Testing transitive closure being superset of original relationship..."
-    quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in listSubSet uniqueRel (trClos (uniqueRel::(Rel Int))))
+    quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in containsAll uniqueRel (trClos (uniqueRel::(Rel Int))))
     print "Testing transitive closure being a set"
     quickCheckResult(\originalRel -> let uniqueRel = nub originalRel in isRelationshipDuplicateFree (trClos (uniqueRel::(Rel Int))))
 
     print "Testing manual test cases for symetric and transitive closure..."
     print (and exercise7TestCaseVerifier)
 
+-- ============================
+-- == Ex 8:
+-- == Time: 0:30 hours
+-- ============================
 
+{-
+Is there a difference between the symmetric closure of the transitive closure of a relation 
 
+Answer: yes, we found a counteraxample:
 
+ (sort $ nub $ trClos $ symClos [(1,2),(2,3),(3,4)] ) /=  (sort $ nub $ symClos $ trClos [(1,2),(2,3),(3,4)] )
 
---        =================
-
-
-
-{-- Sets implemented as ordered lists without duplicates --} 
-
-newtype Set a = Set [a] deriving (Eq,Ord)
-
-instance (Show a) => Show (Set a) where
-    showsPrec _ (Set s) str = showSet s str
-
-showSet []     str = showString "{}" str
-showSet (x:xs) str = showChar '{' ( shows x ( showl xs str))
-     where showl []     str = showChar '}' str
-           showl (x:xs) str = showChar ',' (shows x (showl xs str))
-
-emptySet  :: Set a       
-emptySet = Set []
-
-isEmpty  :: Set a -> Bool            
-isEmpty (Set []) = True
-isEmpty _        = False
-
-inSet  :: (Ord a) => a -> Set a -> Bool  
-inSet x (Set s) = elem x (takeWhile (<= x) s)
-
-subSet :: (Ord a) => Set a -> Set a -> Bool
-subSet (Set []) _       = True  
-subSet (Set (x:xs)) set = (inSet x set) && subSet (Set xs) set 
-
-insertSet :: (Ord a) => a -> Set a -> Set a 
-insertSet x (Set s) = Set (insertList x s) 
-
-insertList x [] = [x]
-insertList x ys@(y:ys') = case compare x y of 
-                                 GT -> y : insertList x ys' 
-                                 EQ -> ys 
-                                 _  -> x : ys 
-
-deleteSet :: Ord a => a -> Set a -> Set a 
-deleteSet x (Set s) = Set (deleteList x s)
-
-deleteList x [] = []
-deleteList x ys@(y:ys') = case compare x y of 
-                                 GT -> y : deleteList x ys'
-                                 EQ -> ys'
-                                 _  -> ys
-
-list2set :: Ord a => [a] -> Set a
-list2set [] = Set []
-list2set (x:xs) = insertSet x (list2set xs)
--- list2set xs = Set (foldr insertList [] xs)
-
-powerSet :: Ord a => Set a -> Set (Set a)
-powerSet (Set xs) = 
-   Set (sort (map (\xs -> (list2set xs)) (powerList xs)))
-
-powerList  :: [a] -> [[a]]
-powerList  [] = [[]]
-powerList  (x:xs) = (powerList xs) 
-                     ++ (map (x:) (powerList xs))
-
-takeSet :: Eq a => Int -> Set a -> Set a
-takeSet n (Set xs) = Set (take n xs) 
-
-infixl 9 !!!
-
-(!!!) :: Eq a => Set a -> Int -> a 
-(Set xs) !!! n = xs !! n
-
-unionSet :: (Ord a) => Set a -> Set a -> Set a 
-unionSet (Set [])     set2  =  set2
-unionSet (Set (x:xs)) set2  = 
-   insertSet x (unionSet (Set xs) set2)
+-}
