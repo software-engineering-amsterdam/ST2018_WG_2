@@ -5,57 +5,31 @@ import System.Random
 import Test.QuickCheck 
 import SetOrd
 import Lecture4
-import System.IO.Unsafe
 
 -- =================================
 -- === 1: Qustions Chapter 4 ==== 1 hours
 -- =================================
--- I have found no points that cause difficulty of understanding
+-- JM: I have found no points that cause difficulty of understanding
+-- MS: No questions
+-- KL: 
+-- EV: 
 
 -- ======================================
 -- === 2: Random IntSet Generator ==== 1 hours
 -- ======================================
 
+
 -- ============
 -- Generator 1
 -- ============
+-- generates a random set of size <= n, where numbers are in the range [1,1000]
+generateRandomSet :: Int -> IO (Set Int)
+generateRandomSet 0 = return emptySet
+generateRandomSet n = do
+             randomInt <- randomRIO (1, 1000)
+             restOfSet <- generateRandomSet (n-1) 
+             return (insertSet randomInt restOfSet)
 
--- helper function to get random function
-randInt' :: Int -> Int -> IO Int
-randInt' low high = do
-    value <- getStdRandom (randomR (low, high))
-    return value
-
-randInt :: Int -> Int -> Int
-randInt a b = unsafePerformIO (randInt' a b)
-
--- function that generates a random set of at most 15 elements
-randomSet :: Set Int
-randomSet = randomSet' 15 emptySet
-
-randomSet' :: Int -> Set Int -> Set Int
-randomSet' 0 s = s
-randomSet' x s = randomSet' (x-1) (insertSet (randInt 0 100) s)
-
--- helper function that checks if a list is sorted
-isSorted :: (Ord a) => [a] -> Bool
-isSorted [] = True
-isSorted (x:[]) = True
-isSorted (x:y:xs) = x <= y && isSorted (y:xs)
-
--- set tester function, if the generated set has at most as many items as the provided variable indicating the length of the set, the set does not contain any duplicates (removing all duplicates in the list does not change the length of the list), and the set is sorted, then we have a valid generator.
-randomSetTest :: Int -> Bool
-randomSetTest x =
-    let len = (abs x) `mod` 30
-        (Set s) = randomSet' len emptySet
-    in  ((length s) <= len) &&
-        (length s == (length $ nub s)) &&
-        (isSorted s)
-{-
-Test Result:
-*Lab4> quickCheck randomSetTest 
-+++ OK, passed 100 tests.
--}
 
 -- ============
 -- Generator 2
@@ -71,7 +45,8 @@ instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
 -- generator 2 tester
 exercise2 = do 
     print "Set generator based on Lab 2, produces single set with <= 20 elements: "
-    print randomSet
+    set <- generateRandomSet 20
+    print set
     print "Set generator using Arbitrary, compatible with QuickCheck, used in later tests."
     print "Sample of generated sets: "
     sample $ (arbitrary :: Gen (Set Int))
@@ -95,29 +70,85 @@ exercise2 = do
 
 
 -- =========================================
--- === 3: intersect, union, and diff ==== 20 mins
+-- === 3: intersect, union, and diff ==== 1:00 hours
 -- =========================================
 -- The intersection of a set can be computed as all of the elements of set1 that also occur in set2
-myIntersect :: (Ord a) => Set a -> Set a -> Set a
-myIntersect (Set set1) (Set set2) = (Set [x | x <- set1, x `elem` set2])
+setIntersection :: (Ord a) => Set a -> Set a -> Set a
+setIntersection (Set set1) (Set set2) = (Set [x | x <- set1, x `elem` set2])
 
 -- The union can be computed by just inserting every element from set1 into set2. The definition of the given Set datatype will take care of removing any duplicates.
-myUnion :: (Ord a) => Set a -> Set a -> Set a
-myUnion (Set []) set2 = set2
-myUnion (Set (s:ss)) set2 = myUnion (Set ss) (insertSet s set2)
+setUnion :: (Ord a) => Set a -> Set a -> Set a
+setUnion (Set []) set2 = set2
+setUnion (Set (s:ss)) set2 = setUnion (Set ss) (insertSet s set2)
 
 -- the difference of a set is the set containing all elements that occur in either one of the given sets, but not both.
-myDiff :: (Ord a) => Set a -> Set a -> Set a
-myDiff (Set set1) (Set set2) = 
-    (Set [x | x <- (set1 ++ set2), not((x `elem` set2) && (x `elem` set1))])
+setDifference :: (Ord a) => Set a -> Set a -> Set a
+setDifference (Set set1) (Set set2) = 
+    (Set [x | x <- set1, not(x `elem` set2)])
 
--- @TODO tests
+set2List :: Set z -> [z]
+set2List (Set a) = a
 
+propertyIntersectionElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyIntersectionElem (Set a) (Set b) (Set res) = forall res (\x -> elem x a) && forall b (\x -> elem x b)
+
+propertyIntersectionLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyIntersectionLength (Set a) (Set b) (Set res) =  (length res <= length a) && (length res <= length b)
+
+propertyUnionElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyUnionElem (Set a) (Set b) (Set res) =  forall res (\x -> elem x a || elem x b)
+
+propertyUnionLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyUnionLength (Set a) (Set b) (Set res) = ((max (length a) (length b)) <= (length res))  && (length res <= (length a + length b))
+
+
+propertyDifferenceElem :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyDifferenceElem (Set a) (Set b) (Set res) =  forall res (\x -> (elem x a) && (not $ elem x b)) 
+
+propertyDifferenceLength :: Eq a => Set a -> Set a -> Set a -> Bool
+propertyDifferenceLength (Set a) (Set b) (Set res) = (length res) <= (length a)
+
+forall :: [a] -> (a -> Bool) -> Bool
+forall = flip all
+
+-- no duplicates in results, verifies that the underlying
+-- data structure invariant was preserved
+setInvariantNoDuplicatesProperty (Set []) = True
+setInvariantNoDuplicatesProperty (Set (x:xs)) = if elem x xs then False else setInvariantNoDuplicatesProperty (Set xs)
+
+exercise3 = do 
+    print "Testing properties of set intersection using own generator..."
+    setA <- generateRandomSet 10
+    setB <- generateRandomSet 5
+    print $ propertyIntersectionElem setA setB (setIntersection setA setB)
+    print $ propertyIntersectionLength setA setB (setIntersection setA setB)
+    print "Testing properties of set union using own generator..."
+    print $ propertyUnionElem setA setB (setUnion setA setB)
+    print $ propertyUnionLength setA setB (setUnion setA setB)
+    print "Testing properties of set difference using own generator..."
+    print $ propertyDifferenceElem setA setB (setDifference setA setB)
+    print $ propertyDifferenceLength setA setB (setDifference setA setB)
+
+    print "Testing properties of set intersection using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyIntersectionElem setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyIntersectionLength setA setB (setIntersection (setA::(Set Int)) (setB::(Set Int))))
+
+
+    print "Testing properties of set union using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyUnionElem setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyUnionLength setA setB (setUnion (setA::(Set Int)) (setB::(Set Int))))
+
+    print "Testing properties of set difference using QuickCheck..."
+    quickCheckResult(\setA setB -> propertyDifferenceElem setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
+    quickCheckResult(\setA setB -> propertyDifferenceLength setA setB (setDifference (setA::(Set Int)) (setB::(Set Int))))
 
 -- =================================
--- === 4: Qustions Chapter 5 ==== 1 hours
+-- === 4: Questions Chapter 5 ==== 1 hours
 -- =================================
--- I have found no points that cause difficulty of understanding
+-- JM: I have found no points that cause difficulty of understanding
+-- MS: No question
+-- KL: 
+-- EV: 
 
 -- ================================
 -- === 5: SymClos Relations ==== 20 mins
@@ -131,7 +162,7 @@ symClos ((x,y):xs) = sort $ nub ((x,y):(y,x):(symClos xs))
 
 
 -- ===============================
--- === 6: trClos Relations ==== 30 mins
+-- === 6: trClos Relations ==== 1:00 hours
 -- ===============================
 infixr 5 @@
 
@@ -171,9 +202,7 @@ trClosTest relation =
         isTransitive transitiveClosure &&
         isClosure isTransitive relation transitiveClosure
 
--- wrapper that allows quickCheck to interact with the trClosTest, we take the first 20 elements from the quickCheck provided example to make sure the functions can be computed in an acceptable timeframe
-trClosQuickTest :: [(Int, Int)] -> Bool
-trClosQuickTest value = trClosTest $ sort $ take 20 value
+
 
 {-
 Test results:
@@ -189,15 +218,21 @@ symClosTest relation =
         isSymmetric symmetricClosure && 
         isClosure isSymmetric relation symmetricClosure
 
--- wrapper that allows quickCheck to interact with the symClosTest, we take the first 20 elements from the quickCheck provided example to make sure the functions can be computed in an acceptable timeframe
-symClosQuickTest :: [(Int, Int)] -> Bool
-symClosQuickTest value = symClosTest $ sort $ take 20 value
+
 
 {-
 Test results:
 *Lab4> quickCheck symClosQuickTest 
 +++ OK, passed 100 tests.
 -}
+
+exercise7 = do
+    print "Testing properties of symetric closure"
+    quickCheckResult(\originalRel -> symClosTest (symClos (originalRel::(Rel Int))))
+
+    print "Testing properties of transitive closure"
+    quickCheckResult(\originalRel -> trClosTest (symClos (originalRel::(Rel Int))))
+
 
 -- ======================================
 -- === 8: sym(tr(R)) =?= tr (sym(R)) ====
@@ -206,6 +241,10 @@ Test results:
 -- we can check this fairly easily by defining a function that makes use of quickCheck to find counterexamples. If the sym of the tr of any Rel is not the same as its tr of the sym, then we have found a counter example.
 symTrIsTrSymCheck :: [(Int, Int)] -> Bool
 symTrIsTrSymCheck a = (symClos $ trClos a) == (trClos $ symClos a)
+
+exercise8 = do 
+    print "Counteraxample of exercise 8: "
+    quickCheck symTrIsTrSymCheck
 
 {-
 *Lab4> quickCheck symTrIsTrSymCheck
