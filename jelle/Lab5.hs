@@ -4,17 +4,23 @@ where
 
 import Data.List
 import System.Random
+import Test.QuickCheck
 
+-- ============================
+-- == Exercise 1 == 
+-- ============================
 
-middleSubGrid :: Sudoku -> (Row, Column) -> [Value]
-middleSubGrid s (1,1) = [s (r,c) | r <- [2,3,4], c <- [2,3,4]]
-middleSubGrid s (2,1) = [s (r,c) | r <- [6,7,8], c <- [2,3,4]]
-middleSubGrid s (1,2) = [s (r,c) | r <- [2,3,4], c <- [6,7,8]]
-middleSubGrid s (2,2) = [s (r,c) | r <- [6,7,8], c <- [6,7,8]]
+nrcSubGrid :: Sudoku -> (Row, Column) -> [Value]
+nrcSubGrid s (r,c)
+    | (r `elem` [2,3,4]) && (c `elem` [2,3,4]) = [s (r,c) | r <- [2,3,4], c <- [2,3,4]]
+    | (r `elem` [2,3,4]) && (c `elem` [6,7,8]) = [s (r,c) | r <- [2,3,4], c <- [6,7,8]]
+    | (r `elem` [6,7,8]) && (c `elem` [2,3,4]) = [s (r,c) | r <- [6,7,8], c <- [2,3,4]]
+    | (r `elem` [6,7,8]) && (c `elem` [6,7,8]) = [s (r,c) | r <- [6,7,8], c <- [6,7,8]]
+    | otherwise = subGrid s (r,c)
 
-middleGridInjective :: Sudoku -> (Row, Column) -> Bool
-middleGridInjective s (r,c) = injective vs where
-    vs = filter (/=0) (middleSubGrid s (r,c))
+nrcGridInjective :: Sudoku -> (Row, Column) -> Bool
+nrcGridInjective s (r,c) = injective vs where
+    vs = filter (/=0) (nrcSubGrid s (r,c))
 
 consistent :: Sudoku -> Bool
 consistent s = and $
@@ -25,8 +31,53 @@ consistent s = and $
                [ subgridInjective s (r,c) | 
                     r <- [1,4,7], c <- [1,4,7]]
                 ++
-               [ middleGridInjective s (l,r) |
-                    l <- [1,2], r <- [1,2]]
+               [ nrcGridInjective s (l,r) |
+                    l <- [2,6], r <- [2,6]]
+
+freeInNrcSubGrid :: Sudoku -> (Row, Column) -> [Value]
+freeInNrcSubGrid s (r,c) = freeInSeq (nrcSubGrid s (r,c))
+
+freeAtPos :: Sudoku -> (Row,Column) -> [Value]
+freeAtPos s (r,c) = 
+  (freeInRow s r) 
+   `intersect` (freeInColumn s c) 
+   `intersect` (freeInSubgrid s (r,c)) 
+   `intersect` (freeInNrcSubGrid s (r,c))
+
+nrcSameBlock :: (Row, Column) -> (Row, Column) -> Bool
+nrcSameBlock (a,b) (c,d)
+    | a `elem` [1,5,9] || b `elem` [1,5,9] = False
+    | a `elem` [2,3,4] && b `elem` [2,3,4] = 
+        c `elem` [2,3,4] && d `elem` [2,3,4]
+    | a `elem` [2,3,4] && b `elem` [6,7,8] = 
+        c `elem` [2,3,4] && d `elem` [6,7,8]
+    | a `elem` [6,7,8] && b `elem` [2,3,4] = 
+        c `elem` [6,7,8] && d `elem` [2,3,4]
+    | a `elem` [6,7,8] && b `elem` [6,7,8] = 
+        c `elem` [6,7,8] && d `elem` [6,7,8]
+
+prune :: (Row,Column,Value) 
+      -> [Constraint] -> [Constraint]
+prune _ [] = []
+prune (r,c,v) ((x,y,zs):rest)
+  | r == x = (x,y,zs\\[v]) : prune (r,c,v) rest
+  | c == y = (x,y,zs\\[v]) : prune (r,c,v) rest
+  | sameblock (r,c) (x,y) = 
+        (x,y,zs\\[v]) : prune (r,c,v) rest
+  | nrcSameBlock (r,c) (x,y) = 
+        (x,y,zs\\[v]) : prune (r,c,v) rest
+  | otherwise = (x,y,zs) : prune (r,c,v) rest
+
+exercise1 :: Grid
+exercise1 = [[0,0,0,3,0,0,0,0,0],
+             [0,0,0,7,0,0,3,0,0],
+             [2,0,0,0,0,0,0,0,8],
+             [0,0,6,0,0,5,0,0,0],
+             [0,9,1,6,0,0,0,0,0],
+             [3,0,0,0,7,1,2,0,0],
+             [0,0,0,0,0,0,0,3,1],
+             [0,8,0,0,4,0,0,0,0],
+             [0,0,2,0,0,0,0,0,0] ]
 
 -- ============================
 -- == Start Lecture Code ==
@@ -110,11 +161,12 @@ freeInColumn s c =
 freeInSubgrid :: Sudoku -> (Row,Column) -> [Value]
 freeInSubgrid s (r,c) = freeInSeq (subGrid s (r,c))
 
-freeAtPos :: Sudoku -> (Row,Column) -> [Value]
-freeAtPos s (r,c) = 
-  (freeInRow s r) 
-   `intersect` (freeInColumn s c) 
-   `intersect` (freeInSubgrid s (r,c)) 
+-- function commented out because we use an adapted version in our solution
+-- freeAtPos :: Sudoku -> (Row,Column) -> [Value]
+-- freeAtPos s (r,c) = 
+--   (freeInRow s r) 
+--    `intersect` (freeInColumn s c) 
+--    `intersect` (freeInSubgrid s (r,c)) 
 
 injective :: Eq a => [a] -> Bool
 injective xs = nub xs == xs
@@ -163,15 +215,16 @@ extendNode (s,constraints) (r,c,vs) =
      sortBy length3rd $ 
          prune (r,c,v) constraints) | v <- vs ]
 
-prune :: (Row,Column,Value) 
-      -> [Constraint] -> [Constraint]
-prune _ [] = []
-prune (r,c,v) ((x,y,zs):rest)
-  | r == x = (x,y,zs\\[v]) : prune (r,c,v) rest
-  | c == y = (x,y,zs\\[v]) : prune (r,c,v) rest
-  | sameblock (r,c) (x,y) = 
-        (x,y,zs\\[v]) : prune (r,c,v) rest
-  | otherwise = (x,y,zs) : prune (r,c,v) rest
+-- function commented out because we use a different implementation in our solution
+-- prune :: (Row,Column,Value) 
+--       -> [Constraint] -> [Constraint]
+-- prune _ [] = []
+-- prune (r,c,v) ((x,y,zs):rest)
+--   | r == x = (x,y,zs\\[v]) : prune (r,c,v) rest
+--   | c == y = (x,y,zs\\[v]) : prune (r,c,v) rest
+--   | sameblock (r,c) (x,y) = 
+--         (x,y,zs\\[v]) : prune (r,c,v) rest
+--   | otherwise = (x,y,zs) : prune (r,c,v) rest
 
 sameblock :: (Row,Column) -> (Row,Column) -> Bool
 sameblock (r,c) (x,y) = bl r == bl x && bl c == bl y 
