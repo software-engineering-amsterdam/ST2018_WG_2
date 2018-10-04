@@ -210,3 +210,29 @@ visaList = [4588662652014530, 4424686399080585, 4098866378874993, 44849529919521
 testCards :: (Integer -> Bool) -> [Integer] -> Bool
 testCards func [] = True
 testCards func (x:xs) = (func x) && testCards func xs
+
+--Task 8 
+-- Source team: 11 - Trying to understand their logic
+-- Further Explanation - Go back when studying for the exam
+xor :: Bool -> Bool -> Bool
+xor a b = (a || b) && not (a && b)
+
+accuses :: Boy -> Boy -> Bool
+accuses Matthew Carl = False
+accuses Matthew Matthew = False
+accuses Matthew _ = True
+accuses Peter Matthew = True
+accuses Peter Jack = True
+accuses Peter _ = False
+accuses Jack x = not (accuses Matthew x) && not (accuses Peter x)
+accuses Arnold x = xor (accuses Matthew x) (accuses Peter x) 
+accuses Carl x = not (accuses Arnold x)
+
+
+accusers :: Boy -> [Boy]
+accusers x = [y| y <- boys, accuses y x]
+
+-- 3 persons are honest so length must be 3
+guilty, honest :: [Boy]
+guilty = [x| x <- boys, length (accusers x) == 3]
+honest = [y| x <- guilty, y <- (accusers x)]
