@@ -1,5 +1,5 @@
 
-module Lecture5
+module Exercise1
 
 where 
 
@@ -16,9 +16,7 @@ positions = [1..9]
 values    = [1..9] 
 
 blocks :: [[Int]]
-blocks = [
-    [1..3],[4..6],[7..9] --standard blocks
-  ]
+blocks = [[1..3],[4..6],[7..9]]
 
 nrcBlocks :: [[Int]]
 nrcBlocks = [[2..4],[6..8]]
@@ -68,7 +66,7 @@ grid2sud gr = \ (r,c) -> pos gr (r,c)
 showSudoku :: Sudoku -> IO()
 showSudoku = showGrid . sud2grid
 
---block index to aray with rows 1 -> [1,2,3], 2 -> [4,5,6]
+--block index to aray with rows 1 -> [1,2,3], 2 -> [4,5,6], 3 -> [7,8,9]
 bl :: Int -> [Int]
 bl x = concat $ filter (elem x) blocks 
 

@@ -9,9 +9,8 @@ import Data.Char
 
 
 --exercise 3 is minimal
---length $ solveNs (initNode example3)  gives number of solutions
 isMinimal :: Sudoku -> Bool
-isMinimal sudoku = (isSudokuUnique sudoku) && 
+isMinimal sudoku = (isSudokuUnique sudoku) && --to satisfy minimality, original must have 1 solution
     (and $ map (not . isSudokuUnique) (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku)))
 
 
@@ -23,25 +22,9 @@ stringToGrid :: String -> Grid
 stringToGrid s = [(map digitToInt) (take 9 $ drop (9*dp) s) | dp <- [0..8] ]
 
 
-
--- isMinimal sudoku = (isOriginalMinimal sudoku) &&  (and $ map (>1) $ 
---  map solutionCountShort (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku)))
-
---isOriginalMinimal sudoku = solutionCountShort sudoku == 1
-
-
---xxx sudoku =  --not $ or $ 
---  map showSudoku (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku))
-
-
---hasOneSolution :: Sudoku -> Bool
--- take 2 ensures that problems with many solutions are not fully enumerated, 
--- we only need 0 to 2 solutions
---hasOneSolution sudoku = (length $ take 2 $ solveNs (initNode (sud2grid sudoku))) == 1
-
 isSudokuUnique :: Sudoku -> Bool
 isSudokuUnique sudoku = (consistent sudoku) -- inconsistent sudoku produces empty Node list
-    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of initial sudoku
+    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of input sudoku
 
 
 removeOneHint :: Sudoku -> (Int,Int) -> Sudoku

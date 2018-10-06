@@ -1,4 +1,4 @@
-module Lab5Ex3 where
+module Exercise3 (isMinimal, isSudokuSolutionUnique) where
  
 import Data.List
 import System.Random
@@ -9,44 +9,52 @@ import Data.Char
 --time: 3 hours, first solution with counting possible solutions was wrong
 --then researching what it takes to be minimal
 
-
+--determines if a given sudoku is minimal
 isMinimal :: Sudoku -> Bool
-isMinimal sudoku = (isSudokuUnique sudoku) && 
-    (and $ map (not . isSudokuUnique) 
-        (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku)))
+isMinimal sudoku = (isSudokuSolutionUnique sudoku) && --to satisfy minimality, original must have 1 solution
+    (and $ map (not . isSudokuSolutionUnique) -- check if all removed hints produce multiple possibilities (non unique)
+        (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku))) --from all filled positions, remove 1 hint
 
 
 
-stringToSudoku :: String -> Sudoku
-stringToSudoku s = grid2sud $ stringToGrid s
-
-stringToGrid :: String -> Grid
-stringToGrid s = [(map digitToInt) (take 9 $ drop (9*dp) s) | dp <- [0..8] ]
-
+--checks if given sudoku has only one possible solution
+isSudokuSolutionUnique :: Sudoku -> Bool
+isSudokuSolutionUnique sudoku = (consistent sudoku) -- inconsistent sudoku produces empty Node list
+    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of input sudoku
 
 
-isSudokuUnique :: Sudoku -> Bool
-isSudokuUnique sudoku = (consistent sudoku) -- inconsistent sudoku produces empty Node list
-    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of initial sudoku
-
-
+--removes one filled position in the sudoku
 removeOneHint :: Sudoku -> (Int,Int) -> Sudoku
 removeOneHint sudoku (r,c) = update sudoku ((r,c),0)
 
 
 --tests
-checkActualMinimalIsMinimal = and $ map isSudokuUnique (map stringToSudoku minimalSudokuExampleString)
+checkActualMinimalSudokuIsMinimal = and $ map isSudokuSolutionUnique (map stringToSudoku minimalSudokuExamplesString)
+checkNonMinimalSudokuIsNotMinimal = and $ map (not . isMinimal) (map grid2sud [example1, example2, example4])
 
---TODO: more tests
+
+exercise3 = do 
+    print "Checking that minimal sudokus are classified minimal:"
+    print checkActualMinimalSudokuIsMinimal
+    print "Checking that non-minimal sudokus are classified as non minimal:"
+    print checkNonMinimalSudokuIsNotMinimal
 
 
+--converts 81 character long string to sudoku
+stringToSudoku :: String -> Sudoku
+stringToSudoku s = grid2sud $ stringToGrid s
+
+--converts 81 character long string to grid
+stringToGrid :: String -> Grid
+stringToGrid s = [(map digitToInt) (take 9 $ drop (9*dp) s) | dp <- [0..8] ]
+
+example6 :: Grid 
+example6 = stringToGrid $ (minimalSudokuExamplesString !! 0)
 
 --source: http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php 
 --source: http://staffhome.ecm.uwa.edu.au/~00013890/sudoku17 
-example6 :: Grid 
-example6 = stringToGrid $ (minimalSudokuExampleString !! 0)
-
-minimalSudokuExampleString = 
+minimalSudokuExamplesString :: [String]
+minimalSudokuExamplesString = 
     ["000000010400000000020000000000050407008000300001090000300400200050100000000806000",
     "000000010400000000020000000000050604008000300001090000300400200050100000000807000",
     "000000012000035000000600070700000300000400800100000000000120000080000040050000600",

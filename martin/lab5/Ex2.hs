@@ -1,5 +1,5 @@
 
-module Lecture5Ex2
+module Lecture5
 
 where 
 
@@ -20,9 +20,6 @@ values    = [1..9]
 
 blocks :: [[Int]]
 blocks = [[1..3],[4..6],[7..9]]
-
-nrcBlocks :: [[Int]]
-nrcBlocks = [[2..4],[6..8]]
 
 showVal :: Value -> String
 showVal 0 = " "
@@ -76,6 +73,7 @@ subGrid :: Sudoku -> (Row,Column) -> [Value]
 subGrid s (r,c) = 
   [ s (r',c') | r' <- bl r, c' <- bl c ]
 
+{-
 freeInSeq :: [Value] -> [Value]
 freeInSeq seq = values \\ seq 
 
@@ -91,19 +89,6 @@ freeInSubgrid :: Sudoku -> (Row,Column) -> [Value]
 freeInSubgrid s (r,c) = freeInSeq (subGrid s (r,c))
 
 
-rowConstrnt = [[(r,c)| c <- values ] | r <- values ]
-columnConstrnt = [[(r,c)| r <- values ] | c <- values ]
-blockConstrnt = [[(r,c)| r <- b1, c <- b2 ] | b1 <- blocks, b2 <- blocks ]
-nrcBlockConstrnt = [[(r,c)| r <- b1, c <- b2 ] | b1 <- ncrBlocks, b2 <- ncrBlocks ]
-
-
-freeAtPos :: Sudoku -> Position -> Constrnt -> [Value]
-freeAtPos s (r,c) xs = let 
-    ys = filter (elem (r,c)) xs 
-    in 
-        foldl1 intersect (map ((values \\) . map s) ys)
-
-{-
 freeAtPos :: Sudoku -> (Row,Column) -> [Value]
 freeAtPos s (r,c) = 
   (freeInRow s r) 
@@ -111,6 +96,17 @@ freeAtPos s (r,c) =
    `intersect` (freeInSubgrid s (r,c)) 
 -}
 
+freeAtPos :: Sudoku -> Position -> Constrnt -> [Value]
+freeAtPos s (r,c) xs = let
+   ys = filter (elem (r,c)) xs
+ in
+   foldl1 intersect (map ((values \\) . map s) ys)
+
+rowConstrnt, columnConstrnt, blockConstrnt, sudokuConstraints :: Constrnt
+rowConstrnt = [[(r,c)| c <- values ] | r <- values ]
+columnConstrnt = [[(r,c)| r <- values ] | c <- values ]
+blockConstrnt = [[(r,c)| r <- b1, c <- b2 ] | b1 <- blocks, b2 <- blocks ]
+sudokuConstraints = rowConstrnt ++ columnConstrnt ++ blockConstrnt --TOOD: nub required??
 
 injective :: Eq a => [a] -> Bool
 injective xs = nub xs == xs
@@ -186,7 +182,7 @@ length3rd (_,_,zs) (_,_,zs') = compare (length zs) (length zs')
 
 constraints :: Sudoku -> [Constraint] 
 constraints s = sortBy length3rd 
-    [(r,c, freeAtPos s (r,c)) | 
+    [(r,c, freeAtPos s (r,c) sudokuConstraints) | 
                        (r,c) <- openPositions s ]
 
 data Tree a = T a [Tree a] deriving (Eq,Ord,Show)
