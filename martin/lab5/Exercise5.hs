@@ -8,6 +8,9 @@ import Exercise3 --helper functions
 import Exercise1 --modified lecture5 with NCR
 
 
+--generate a sudoku with 'removeNum' removed cells which is still uniquely solvable
+--returns an exceptions if no solution is found in 'maxAttempts' times
+generateUniqueUnsolvedSudoku :: Int -> Int -> IO Sudoku
 generateUniqueUnsolvedSudoku _ 0 = error "Can not create sudoku with given constraints"
 generateUniqueUnsolvedSudoku removeNum maxAttempts  = do
     sudoku <- generateUnsolvedSudoku removeNum
@@ -15,7 +18,9 @@ generateUniqueUnsolvedSudoku removeNum maxAttempts  = do
         then return sudoku 
         else generateUniqueUnsolvedSudoku removeNum (maxAttempts - 1 )
 
-
+--generates a sudoku with 'removeNum' cells removed
+--no guarantee on there being a unique solution
+generateUnsolvedSudoku :: Int -> IO Sudoku
 generateUnsolvedSudoku removeNum = do
     coords <- generateRandomDistinctCoordinates removeNum
     (sudoku, _) <- genRandomSudoku
@@ -24,19 +29,18 @@ generateUnsolvedSudoku removeNum = do
         in
             return (updatedSudoku)
 
---generateUnsolvedSudoku 5 >>= showSudoku
-
+--changed update function to support partial application of sudoku
 updateFlip :: ((Row,Column),Value) -> Sudoku -> Sudoku
 updateFlip ((r,c), val) sudoku = update sudoku ((r,c),val)
 
---todo: rewrite with fold?
 -- >> https://stackoverflow.com/questions/28400825/applying-a-list-of-functions-in-haskell/28400942
 -- >> https://stackoverflow.com/questions/47157748/list-of-functions-applying-to-argument 
 applyFunctions :: [(a -> a)] -> a -> a
-applyFunctions [] input = input
-applyFunctions (fun:functions) input = applyFunctions functions (fun input)
+applyFunctions functions input = foldl (\acc fun -> fun acc) input functions
+--applyFunctions [] input = input
+--applyFunctions (fun:functions) input = applyFunctions functions (fun input)
 
-
+--generate a list of random and distinct sudoku coordinates in the range 1-9 inclusive
 generateRandomDistinctCoordinates :: Int -> IO [(Row,Column)] 
 generateRandomDistinctCoordinates num = randUniqueCoord num []
 

@@ -1,5 +1,5 @@
 
-module Lecture5
+module Exercise2
 
 where 
 
@@ -96,11 +96,11 @@ freeAtPos s (r,c) =
    `intersect` (freeInSubgrid s (r,c)) 
 -}
 
-freeAtPos :: Sudoku -> Position -> Constrnt -> [Value]
-freeAtPos s (r,c) xs = let
-   ys = filter (elem (r,c)) xs
- in
-   foldl1 intersect (map ((values \\) . map s) ys)
+freeAtPos' :: Sudoku -> Position -> Constrnt -> [Value]
+freeAtPos' s (r,c) xs = let
+    ys = filter (elem (r,c)) xs
+    in
+        foldl1 intersect (map ((values \\) . map s) ys)
 
 rowConstrnt, columnConstrnt, blockConstrnt, sudokuConstraints :: Constrnt
 rowConstrnt = [[(r,c)| c <- values ] | r <- values ]
@@ -182,7 +182,7 @@ length3rd (_,_,zs) (_,_,zs') = compare (length zs) (length zs')
 
 constraints :: Sudoku -> [Constraint] 
 constraints s = sortBy length3rd 
-    [(r,c, freeAtPos s (r,c) sudokuConstraints) | 
+    [(r,c, freeAtPos' s (r,c) sudokuConstraints) | 
                        (r,c) <- openPositions s ]
 
 data Tree a = T a [Tree a] deriving (Eq,Ord,Show)
