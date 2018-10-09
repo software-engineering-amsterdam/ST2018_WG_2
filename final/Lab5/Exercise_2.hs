@@ -6,6 +6,103 @@ where
 import Data.List
 import System.Random
 
+
+
+-- ============================
+-- == Exercise 2 == 3 hours
+-- ============================
+
+
+{-
+Findings:
+
+There is less code duplication in exercise 2 compared to exercise 1, making it more maintainable.
+From understandability, most of us found reading what exercise 2 harder. 
+After we refactored the code, adding a new constraint to exercise 2 should be easier, as it only requires adding a new constraint for sudokuConstraints as the union of all constraints. 
+This reduces the probability of making an error when adding new constraints, while in exercise 1 constraints had to be added in multiple places. 
+-}
+
+--checks if given sudoku has only one possible solution
+isSudokuSolutionUnique :: Sudoku -> Bool
+isSudokuSolutionUnique sudoku = (consistent sudoku) -- inconsistent sudoku produces empty Node list
+    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of input sudoku
+
+
+exercise2 :: IO ()
+exercise2 = do
+  print "Test cases for exercise 2 regular sudoku"
+  print "Exercise 1 unique solution: "
+  print $ isSudokuSolutionUnique (grid2sud example1)
+  print "Exercise 4 not unique: "
+  print $ not $ isSudokuSolutionUnique (grid2sud example4)
+
+  print "Randomly generated sudoku (solved)"
+  filledSudoku <- genRandomSudoku
+  showSudoku (fst filledSudoku)
+  (randomProb,_) <- genProblem filledSudoku
+  print "Converted to problem:"
+  showSudoku randomProb
+  print "Solution to above problem"
+  solveAndShow (sud2grid randomProb)
+  return ()
+
+
+{-
+Test Report:
+
+*Exercise2> exercise2
+"Test cases for exercise 2 regular sudoku"
+"Exercise 1 unique solution: "
+True
+"Exercise 4 not unique: "
+True
+"Randomly generated sudoku (solved)"
++-------+-------+-------+
+| 3 6 2 | 9 5 4 | 7 1 8 |
+| 7 9 8 | 1 6 3 | 4 2 5 |
+| 1 4 5 | 2 7 8 | 3 6 9 |
++-------+-------+-------+
+| 2 8 1 | 7 9 6 | 5 3 4 |
+| 4 5 3 | 8 1 2 | 9 7 6 |
+| 6 7 9 | 3 4 5 | 1 8 2 |
++-------+-------+-------+
+| 9 2 6 | 5 3 7 | 8 4 1 |
+| 5 3 4 | 6 8 1 | 2 9 7 |
+| 8 1 7 | 4 2 9 | 6 5 3 |
++-------+-------+-------+
+"Converted to problem:"
++-------+-------+-------+
+|     2 |   5 4 |       |
+|       |   6 3 | 4   5 |
+| 1     |     8 |       |
++-------+-------+-------+
+|   8   |   9   |       |
+|       |   1 2 |   7   |
+| 6   9 |       |     2 |
++-------+-------+-------+
+| 9     |   3   |     1 |
+|     4 |       |       |
+|     7 |       |   5 3 |
++-------+-------+-------+
+"Solution to above problem"
++-------+-------+-------+
+| 3 6 2 | 9 5 4 | 7 1 8 |
+| 7 9 8 | 1 6 3 | 4 2 5 |
+| 1 4 5 | 2 7 8 | 3 6 9 |
++-------+-------+-------+
+| 2 8 1 | 7 9 6 | 5 3 4 |
+| 4 5 3 | 8 1 2 | 9 7 6 |
+| 6 7 9 | 3 4 5 | 1 8 2 |
++-------+-------+-------+
+| 9 2 6 | 5 3 7 | 8 4 1 |
+| 5 3 4 | 6 8 1 | 2 9 7 |
+| 8 1 7 | 4 2 9 | 6 5 3 |
++-------+-------+-------+
+
+
+
+-}
+
 type Row    = Int 
 type Column = Int 
 type Value  = Int
@@ -83,7 +180,7 @@ rowConstrnt, columnConstrnt, blockConstrnt, sudokuConstraints :: Constrnt
 rowConstrnt = [[(r,c)| c <- values ] | r <- values ]
 columnConstrnt = [[(r,c)| r <- values ] | c <- values ]
 blockConstrnt = [[(r,c)| r <- b1, c <- b2 ] | b1 <- blocks, b2 <- blocks ]
-sudokuConstraints = rowConstrnt ++ columnConstrnt ++ blockConstrnt --TOOD: nub required??
+sudokuConstraints = rowConstrnt ++ columnConstrnt ++ blockConstrnt
 
 injective :: Eq a => [a] -> Bool
 injective xs = nub xs == xs

@@ -35,14 +35,16 @@ checkActualMinimalSudokuIsMinimal = and $ map isMinimal (map stringToSudoku mini
 checkNonMinimalSudokuIsNotMinimal :: Bool
 checkNonMinimalSudokuIsNotMinimal = and $ map (not . isMinimal) (map grid2sud [example1, example2, example4])
 
-
+--runs tests for exercise 3
+exercise3 :: IO ()
 exercise3 = do 
     print "Checking that minimal sudokus are classified minimal:"
     print checkActualMinimalSudokuIsMinimal
     print "Checking that non-minimal sudokus are classified as non minimal:"
     print checkNonMinimalSudokuIsNotMinimal
 
-{-  Result:
+{-  
+Result:
 *Exercise3> exercise3 
 "Checking that minimal sudokus are classified minimal:"
 True
@@ -58,8 +60,6 @@ stringToSudoku s = grid2sud $ stringToGrid s
 stringToGrid :: String -> Grid
 stringToGrid s = [(map digitToInt) (take 9 $ drop (9*dp) s) | dp <- [0..8] ]
 
-example6 :: Grid 
-example6 = stringToGrid $ (minimalSudokuExamplesString !! 0)
 
 --source: http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php 
 --source: http://staffhome.ecm.uwa.edu.au/~00013890/sudoku17 
