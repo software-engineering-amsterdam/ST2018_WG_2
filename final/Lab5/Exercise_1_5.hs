@@ -10,6 +10,14 @@ import Test.QuickCheck
 -- == Exercise 1 == 2 hours
 -- ============================
 
+{-  Constraint Formalization
+A grid is corrct if they satisfy the following constraints:
+  - The integers in each row have to contain no duplicates and belong to [1..9]
+  - The integers in each column have to contain no duplicates and belong to [1..9]
+  - The integers in each block have to contain no duplicates and belong to [1..9]
+  - The integers in each NRC-block have to contain no duplicates and belong to [1..9]
+-}
+
 -- nrcSubGrid returns a list containing all the values in the nrcSubGrid at the given location in the given sudoku. If the given location isn't inside any nrcSubGrids, it returns the values of the regular subgrid instead.
 nrcSubGrid :: Sudoku -> (Row,Column) -> [Value]
 nrcSubGrid s (r,c) =  [ s (r',c') | r' <- nrcbl r, c' <- nrcbl c ]
