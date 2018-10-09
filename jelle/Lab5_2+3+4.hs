@@ -62,9 +62,9 @@ putZeroAt grid (r,c) =
 sud3emptyGen :: IO ()
 sud3emptyGen = do
     (sud, _) <- genRandomSudoku
-    grid <- sud2grid sud
-    node <- initNode (wipe3blocks grid)
-    min <- genProblem node
+    let grid = sud2grid sud
+        node = initNode (wipeNblocks grid 3)
+    min <- genProblem (head node)
     return min >>= showNode
 
 -- helper function to get random integer value
@@ -76,12 +76,29 @@ randInt' low high = do
 randInt :: Int -> Int -> Int
 randInt a b = unsafePerformIO (randInt' a b)
 
-wipe3blocks :: Grid -> Grid
-wipe3blocks grid = wipeNblocks grid 3
-
 wipeNblocks :: Grid -> Int -> Grid
 wipeNblocks grid n =
-    example1
+    let subSetToWipe = takeRandomSubset positions n []
+    in wipeBlocks grid subSetToWipe
+
+wipeBlocks :: Grid -> [Int] -> Grid
+wipeBlocks grid [] = grid
+wipeBlocks grid (x:xs) = wipeBlocks (wipeBlock grid x) xs
+
+wipeBlock :: Grid -> Int -> Grid
+wipeBlock grid 1 = putZerosAt grid [(r,c) | r <- [1..3], c <- [1..3]]
+wipeBlock grid 2 = putZerosAt grid [(r,c) | r <- [4..6], c <- [1..3]]
+wipeBlock grid 3 = putZerosAt grid [(r,c) | r <- [7..9], c <- [1..3]]
+wipeBlock grid 4 = putZerosAt grid [(r,c) | r <- [1..3], c <- [4..6]]
+wipeBlock grid 5 = putZerosAt grid [(r,c) | r <- [4..6], c <- [4..6]]
+wipeBlock grid 6 = putZerosAt grid [(r,c) | r <- [7..9], c <- [4..6]]
+wipeBlock grid 7 = putZerosAt grid [(r,c) | r <- [1..3], c <- [7..9]]
+wipeBlock grid 8 = putZerosAt grid [(r,c) | r <- [4..6], c <- [7..9]]
+wipeBlock grid 9 = putZerosAt grid [(r,c) | r <- [7..9], c <- [7..9]]
+
+putZerosAt :: Grid -> [(Int, Int)] -> Grid
+putZerosAt grid [] = grid
+putZerosAt grid (x:xs) = putZerosAt (putZeroAt grid x) xs
 
 takeRandomSubset :: [Int] -> Int -> [Int] -> [Int]
 takeRandomSubset [] _ collector = collector
@@ -90,7 +107,7 @@ takeRandomSubset currSet n collector =
     let index = randInt 0 (length currSet - 1)
         thisItem = currSet !! index
         (x,_:ys) = splitAt index currSet
-    in (x ++ ys) (n-1) (thisItem:collector)
+    in takeRandomSubset (x ++ ys) (n-1) (thisItem:collector)
 
 
 -- ============================
