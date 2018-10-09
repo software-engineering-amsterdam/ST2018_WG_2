@@ -135,6 +135,21 @@ isPermutation (x:xs) ys = if x `elem` ys then isPermutation (xs) (deleteOneOccur
 deleteOneOccurence [] res _ = res
 deleteOneOccurence (x:xs) ys  f = if x == f then (ys++xs) else deleteOneOccurence xs (x:ys) f
 
+
+-- ======== Ex 4 ======
+isPermutation2 :: Eq a => [a] -> [a] -> Bool
+isPermutation2 [] [] = True
+isPermutation2 [] _ = False
+isPermutation2 _ [] = False
+isPermutation2 (x:xs) originalList = if elem x originalList
+                                    then isPermutation2 xs (deleteOneElem x originalList)
+                                    else False
+
+
+deleteOneElem elementToDelete (y:ys) = if elementToDelete == y then ys else [y] ++ (deleteOneElem elementToDelete ys)
+-- ==================
+
+
 --Test properties
 equalLength a b = length a == length b
 everyElementOfAInB a b = forall a (\x -> elem x b)

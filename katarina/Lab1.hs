@@ -61,11 +61,18 @@ formularForListsHolds n = sizeOfPowerSet(abs n) == sizeOfPowerSet' (abs n)
 
 
 
+-- ======Ex 3=====
 
--- Exercise 3
+-- idea n! is the number of reorderings
 
+faculty::Int->Int
+faculty 0 = 1
+faculty n = n*(faculty (n-1))
 
+quickCheckPerms :: Int -> Bool
+quickCheckPerms n = (length $ permutations [1..(mod (abs n) 5)]) == faculty (mod (abs n) 5)
 
+-- ===============
 
 -- Exercise 4
 
@@ -87,6 +94,13 @@ consecutivePrimes101 n = sum (take 101 $ filter (\x -> x>=n) primes)
 
 resultEx5 = head $ filter prime (map consecutivePrimes101 [1..])
 
+-- ======= Ex 6=====
+counterexampleGen::Int->Int
+counterexampleGen n = if not $ prime ((foldr (*) 1 (take n primes))+1)
+                      then (foldr (*) 1 (take n primes))+1
+                      else counterexampleGen (n+1)
+
+-- ================
 
 
 
@@ -113,5 +127,15 @@ multiplyEveryoneByTwo (x:xs) = luhnDouble x : multiplyEveryoneByTwo xs
 
 luhnDouble x = if((x*2) > 9) then ((x*2)-9) else (x*2)
 
-luhnSum creditcardNumber = sum $ multiplyEveryoneByTwo(second(reverseList(digits creditcardNumber))) ++ first(reverseList(digits creditcardNumber))-- todo: flip around, split, double every second, sum up
+luhnSum creditcardNumber = sum $ multiplyEveryoneByTwo(second(reverseList(digits creditcardNumber))) ++ first(reverseList(digits creditcardNumber))
 luhnCorrect creditcardNumber = (luhnSum creditcardNumber) `mod` 10 == 0
+
+
+
+
+
+-- Exercise 8
+
+
+
+
