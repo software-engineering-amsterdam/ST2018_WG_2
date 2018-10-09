@@ -12,8 +12,9 @@ import Exercise3
 generateUniqueUnsolvedSudoku _ 0 = error "Can not create sudoku with given constraints"
 generateUniqueUnsolvedSudoku removeNum maxAttempts  = do
     sudoku <- generateUnsolvedSudoku removeNum
-    if isSudokuSolutionUnique sudoku 
-        then return sudoku 
+    (minSudoku, _) <- genProblem (head $ initNode (sud2grid sudoku))
+    if isSudokuSolutionUnique minSudoku 
+        then return minSudoku 
         else generateUniqueUnsolvedSudoku removeNum (maxAttempts - 1 )
 
 --generates a sudoku with 'removeNum' blocks removed
