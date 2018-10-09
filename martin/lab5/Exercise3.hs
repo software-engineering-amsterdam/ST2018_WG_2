@@ -29,7 +29,7 @@ removeOneHint sudoku (r,c) = update sudoku ((r,c),0)
 
 
 --tests
-checkActualMinimalSudokuIsMinimal = map isMinimal (map stringToSudoku minimalSudokuExamplesString)
+checkActualMinimalSudokuIsMinimal = and $ map isMinimal (map stringToSudoku minimalSudokuExamplesString)
 checkNonMinimalSudokuIsNotMinimal = and $ map (not . isMinimal) (map grid2sud [example1, example2, example4])
 
 
