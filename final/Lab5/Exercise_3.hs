@@ -29,7 +29,10 @@ removeOneHint sudoku (r,c) = update sudoku ((r,c),0)
 
 
 --tests
-checkActualMinimalSudokuIsMinimal = map isMinimal (map stringToSudoku minimalSudokuExamplesString)
+checkActualMinimalSudokuIsMinimal :: Bool
+checkActualMinimalSudokuIsMinimal = and $ map isMinimal (map stringToSudoku minimalSudokuExamplesString)
+
+checkNonMinimalSudokuIsNotMinimal :: Bool
 checkNonMinimalSudokuIsNotMinimal = and $ map (not . isMinimal) (map grid2sud [example1, example2, example4])
 
 
@@ -39,6 +42,13 @@ exercise3 = do
     print "Checking that non-minimal sudokus are classified as non minimal:"
     print checkNonMinimalSudokuIsNotMinimal
 
+{-  Result:
+*Exercise3> exercise3 
+"Checking that minimal sudokus are classified minimal:"
+True
+"Checking that non-minimal sudokus are classified as non minimal:"
+True
+-}
 
 --converts 81 character long string to sudoku
 stringToSudoku :: String -> Sudoku

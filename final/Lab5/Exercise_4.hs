@@ -5,12 +5,76 @@ import System.Random
 import Lecture5
 import Data.Char
 import System.Random
-import System.IO.Unsafe
-
 
 -- ============================
--- == Exercise 4 == 2.5 hours
+-- == Exercise 4 == 4 hours
 -- ============================
+
+--determines if a given sudoku is minimal
+isMinimal :: Sudoku -> Bool
+isMinimal sudoku = (isSudokuSolutionUnique sudoku) && --to satisfy minimality, original must have 1 solution
+    (and $ map (not . isSudokuSolutionUnique) -- check if all removed hints produce multiple possibilities (non unique)
+        (map (\(r,c) -> removeOneHint sudoku (r,c)) (filledPositions sudoku))) --from all filled positions, remove 1 hint
+
+--checks if given sudoku has only one possible solution
+isSudokuSolutionUnique :: Sudoku -> Bool
+isSudokuSolutionUnique sudoku = (consistent sudoku) -- inconsistent sudoku produces empty Node list
+    && (and $ map uniqueSol (initNode (sud2grid sudoku))) --check uniqueness of input sudoku
+
+--removes one filled position in the sudoku
+removeOneHint :: Sudoku -> (Int,Int) -> Sudoku
+removeOneHint sudoku (r,c) = update sudoku ((r,c),0)
+
+--generate a sudoku with 'removeNum' removed blocks which is still uniquely solvable
+--returns an exceptions if no solution is found in 'maxAttempts' times
+generateUniqueUnsolvedSudoku :: Int -> Int -> IO Sudoku
+generateUniqueUnsolvedSudoku _ 0 = error "Can not create sudoku with given constraints"
+generateUniqueUnsolvedSudoku removeNum maxAttempts  = do
+    sudoku <- generateUnsolvedSudoku removeNum
+    (minSudoku, _) <- genProblem (head $ initNode (sud2grid sudoku))
+    if isSudokuSolutionUnique minSudoku 
+        then return minSudoku 
+        else generateUniqueUnsolvedSudoku removeNum (maxAttempts - 1 )
+
+--generates a sudoku with 'removeNum' blocks removed
+--no guarantee on there being a unique solution
+generateUnsolvedSudoku :: Int -> IO Sudoku
+generateUnsolvedSudoku removeNum = do
+    grids <- generateRandomDistinctGrids removeNum
+    (sudoku, _) <- genRandomSudoku
+    let unwrappedGrids = nub $ concat $ map gridToCoords grids
+    let updateList = map (\(r,c) -> updateFlip ((r,c), 0)) unwrappedGrids 
+        updatedSudoku = applyFunctions updateList sudoku
+        in
+            return (updatedSudoku)
+
+--changed update function to support partial application of sudoku
+updateFlip :: ((Row,Column),Value) -> Sudoku -> Sudoku
+updateFlip ((r,c), val) sudoku = update sudoku ((r,c),val)
+
+-- >> https://stackoverflow.com/questions/28400825/applying-a-list-of-functions-in-haskell/28400942
+-- >> https://stackoverflow.com/questions/47157748/list-of-functions-applying-to-argument 
+applyFunctions :: [(a -> a)] -> a -> a
+applyFunctions functions input = foldl (\acc fun -> fun acc) input functions
+
+--converts grid index [0,2] to list of all blocks in given grid in range [1,9]
+gridToCoords :: (Int, Int)  -> [(Row, Column)]
+gridToCoords (inR, inC) = [(r + inR * 3 + 1 , c + inC * 3 + 1) | r <- [0..2], c <- [0..2]]
+
+--generates 'num' distinct grid coordinates in the range [0,2]
+generateRandomDistinctGrids :: Int -> IO [(Int, Int)] 
+generateRandomDistinctGrids num = randUniqueGrid num []
+
+--source: https://stackoverflow.com/questions/27727980/random-numbers-without-duplicates
+randUniqueGrid :: Int -> [(Int, Int)] -> IO [(Int, Int)] 
+randUniqueGrid num list
+    | ((length list) >= num) = return list
+    | otherwise = do
+        x <- randomRIO (0,2)
+        y <- randomRIO (0,2)
+        if elem (x,y) list
+            then randUniqueGrid num list
+            else randUniqueGrid num ((x,y):list)    
 
 {-  Findings report:
 The function sud3emptyGen generates sudokus with three empty blocks. These are minimized, but the minimization really only makes sense if the three blocks that are randomly chosen aren't in line with each other, i.e, not in the same row or column. This is because if they do align, the problem becomes ambiguous. This is immediately an answer to whether we can build puzzles with more than 3 emtpy blocks: no. If we take 4 empty blocks in the sudoku, at least two of them occur in the same row or column, causing them to be ambiguous and invalid sudokus.
@@ -20,81 +84,19 @@ The provided implementation generates random sudokus with randomly chosen blocks
 
 -}
 
-sud3emptyGen :: IO ()
-sud3emptyGen = do
-    (sud, _) <- genRandomSudoku
-    let grid = sud2grid sud
-        node = initNode (wipeNblocks grid 3)
-    min <- genProblem (head node)
-    return min >>= showNode
-
--- helper function to get random integer value
-randInt' :: Int -> Int -> IO Int
-randInt' low high = do
-    value <- getStdRandom (randomR (low, high))
-    return value
-
-randInt :: Int -> Int -> Int
-randInt a b = unsafePerformIO (randInt' a b)
-
--- @TODO Martin remove unsafePerformIO
-
-wipeNblocks :: Grid -> Int -> Grid
-wipeNblocks grid n =
-    let subSetToWipe = takeRandomSubset positions n []
-    in wipeBlocks grid subSetToWipe
-
-wipeBlocks :: Grid -> [Int] -> Grid
-wipeBlocks grid [] = grid
-wipeBlocks grid (x:xs) = wipeBlocks (wipeBlock grid x) xs
-
-wipeBlock :: Grid -> Int -> Grid
-wipeBlock grid 1 = putZerosAt grid [(r,c) | r <- [1..3], c <- [1..3]]
-wipeBlock grid 2 = putZerosAt grid [(r,c) | r <- [4..6], c <- [1..3]]
-wipeBlock grid 3 = putZerosAt grid [(r,c) | r <- [7..9], c <- [1..3]]
-wipeBlock grid 4 = putZerosAt grid [(r,c) | r <- [1..3], c <- [4..6]]
-wipeBlock grid 5 = putZerosAt grid [(r,c) | r <- [4..6], c <- [4..6]]
-wipeBlock grid 6 = putZerosAt grid [(r,c) | r <- [7..9], c <- [4..6]]
-wipeBlock grid 7 = putZerosAt grid [(r,c) | r <- [1..3], c <- [7..9]]
-wipeBlock grid 8 = putZerosAt grid [(r,c) | r <- [4..6], c <- [7..9]]
-wipeBlock grid 9 = putZerosAt grid [(r,c) | r <- [7..9], c <- [7..9]]
-
--- @TODO Jelle rewrite wipeBlock in one line
-
--- inspairation taken from Second answer (by Don Stewart) to this question:
--- https://stackoverflow.com/questions/5852722/replace-individual-list-elements-in-haskell
-putZeroAt :: Grid -> (Int, Int) -> Grid
-putZeroAt grid (r,c) = 
-    let (rowsBefore,thisRow:rowsAfter) = splitAt (r-1) grid
-        (colsBefore,_:colsAfter) = splitAt (c-1) thisRow
-    in  rowsBefore ++ [colsBefore ++ [0] ++ colsAfter] ++ rowsAfter
-
-putZerosAt :: Grid -> [(Int, Int)] -> Grid
-putZerosAt grid [] = grid
-putZerosAt grid (x:xs) = putZerosAt (putZeroAt grid x) xs
-
-takeRandomSubset :: [Int] -> Int -> [Int] -> [Int]
-takeRandomSubset [] _ collector = collector
-takeRandomSubset _ 0 collector = collector
-takeRandomSubset currSet n collector = 
-    let index = randInt 0 (length currSet - 1)
-        thisItem = currSet !! index
-        (x,_:ys) = splitAt index currSet
-    in takeRandomSubset (x ++ ys) (n-1) (thisItem:collector)
-
 {-  Result:
-*Lab5> sud3emptyGen 
+*Lab5Ex4> generateUniqueUnsolvedSudoku 3 100 >>= showSudoku 
 +-------+-------+-------+
-|   2 6 |       |   5   |
-| 8     |       | 7 2   |
-| 7   4 |       |     3 |
+| 6     |   3 4 |   9 7 |
+|   4   |   6   |   2   |
+| 1   9 |     7 | 5 6   |
 +-------+-------+-------+
-| 3 4   | 9     |       |
-|       |   8 2 |       |
-| 6 8 2 |   1   |       |
+|       | 4     | 9     |
+|       |   8 9 | 6     |
+|       | 3   6 | 8 1   |
 +-------+-------+-------+
-|       |     3 |     7 |
-|       | 4 2   | 1   8 |
-|       | 1     | 9     |
+| 3   5 |       |       |
+|   2   |       |       |
+|   7 1 |       |       |
 +-------+-------+-------+
 -}
