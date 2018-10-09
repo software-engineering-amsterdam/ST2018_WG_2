@@ -7,9 +7,10 @@ import System.Random
 import Test.QuickCheck
 
 -- ============================
--- == Exercise 1 == 
+-- == Exercise 1 == 2 hours
 -- ============================
 
+-- nrcSubGrid returns a list containing all the values in the nrcSubGrid at the given location in the given sudoku. If the given location isn't inside any nrcSubGrids, it returns the values of the regular subgrid instead.
 nrcSubGrid :: Sudoku -> (Row, Column) -> [Value]
 nrcSubGrid s (r,c)
     | (r `elem` [2,3,4]) && (c `elem` [2,3,4]) = [s (r,c) | r <- [2,3,4], c <- [2,3,4]]
@@ -18,10 +19,12 @@ nrcSubGrid s (r,c)
     | (r `elem` [6,7,8]) && (c `elem` [6,7,8]) = [s (r,c) | r <- [6,7,8], c <- [6,7,8]]
     | otherwise = subGrid s (r,c)
 
+-- nrcGridInjective checks whether the values of the nrcSubGrid at the given location in the given sudoku are injective. If the given location isn't in a nrcSubGrid, then it returns the injectiveness of the regular subgrid instead.
 nrcGridInjective :: Sudoku -> (Row, Column) -> Bool
 nrcGridInjective s (r,c) = injective vs where
     vs = filter (/=0) (nrcSubGrid s (r,c))
 
+-- modified consistent checker, it includes a check to see if the nrcSubGrids are also injective.
 consistent :: Sudoku -> Bool
 consistent s = and $
                [ rowInjective s r |  r <- positions ]
@@ -34,9 +37,11 @@ consistent s = and $
                [ nrcGridInjective s (l,r) |
                     l <- [2,6], r <- [2,6]]
 
+-- helper function that determines what values are free in the nrcSubGrid at the geiven location.
 freeInNrcSubGrid :: Sudoku -> (Row, Column) -> [Value]
 freeInNrcSubGrid s (r,c) = freeInSeq (nrcSubGrid s (r,c))
 
+-- modified freeAtPos function that also intersects the result with the available values in the nrcSubGrids.
 freeAtPos :: Sudoku -> (Row,Column) -> [Value]
 freeAtPos s (r,c) = 
   (freeInRow s r) 
@@ -44,6 +49,7 @@ freeAtPos s (r,c) =
    `intersect` (freeInSubgrid s (r,c)) 
    `intersect` (freeInNrcSubGrid s (r,c))
 
+-- helper function that checks whether two given locations lie within the same nrcSubGrid
 nrcSameBlock :: (Row, Column) -> (Row, Column) -> Bool
 nrcSameBlock (a,b) (c,d)
     | a `elem` [1,5,9] || b `elem` [1,5,9] = False
@@ -56,6 +62,7 @@ nrcSameBlock (a,b) (c,d)
     | a `elem` [6,7,8] && b `elem` [6,7,8] = 
         c `elem` [6,7,8] && d `elem` [6,7,8]
 
+-- modified prune function that also prunes on whether the locations reside in the same nrcSubGrid. This makes sure that no solutions are accepted where there is more than one of any value in a nrcSubGrid.
 prune :: (Row,Column,Value) 
       -> [Constraint] -> [Constraint]
 prune _ [] = []
@@ -68,6 +75,7 @@ prune (r,c,v) ((x,y,zs):rest)
         (x,y,zs\\[v]) : prune (r,c,v) rest
   | otherwise = (x,y,zs) : prune (r,c,v) rest
 
+-- grid representation of the exercise sudoku
 exercise1 :: Grid
 exercise1 = [[0,0,0,3,0,0,0,0,0],
              [0,0,0,7,0,0,3,0,0],
@@ -78,6 +86,28 @@ exercise1 = [[0,0,0,3,0,0,0,0,0],
              [0,0,0,0,0,0,0,3,1],
              [0,8,0,0,4,0,0,0,0],
              [0,0,2,0,0,0,0,0,0] ]
+
+{- Puzzle solution:
++-------+-------+-------+
+| 4 7 8 | 3 9 2 | 6 1 5 |
+| 6 1 9 | 7 5 8 | 3 2 4 |
+| 2 3 5 | 4 1 6 | 9 7 8 |
++-------+-------+-------+
+| 7 2 6 | 8 3 5 | 1 4 9 |
+| 8 9 1 | 6 2 4 | 7 5 3 |
+| 3 5 4 | 9 7 1 | 2 8 6 |
++-------+-------+-------+
+| 5 6 7 | 2 8 9 | 4 3 1 |
+| 9 8 3 | 1 4 7 | 5 6 2 |
+| 1 4 2 | 5 6 3 | 8 9 7 |
++-------+-------+-------+
+-}
+
+
+-- ============================
+-- == Exercise 2 == 
+-- ============================
+
 
 -- ============================
 -- == Start Lecture Code ==
