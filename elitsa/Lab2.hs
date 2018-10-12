@@ -108,19 +108,43 @@ test2 = stronger domain (\ x -> even x || x > 3) even
 test3 = stronger domain (\ x -> (even x && x > 3) || even x) even
 test4 = stronger domain even (\ x -> (even x && x > 3) || even x) 
 
--- prop1 :: Int -> Bool
--- prop1 x = x > 3 && even x
+prop1 :: Int -> Bool
+prop1 x = x > 3 && even x
 
--- prop2 :: Int -> Bool
--- prop2 x = x > 3 || even x
+prop2 :: Int -> Bool
+prop2 x = x > 3 || even x
 
--- prop3 :: Int -> Bool
--- prop3 x = (even x && x > 3) || even x
+prop3 :: Int -> Bool
+prop3 x = (even x && x > 3) || even x
 
--- prop3 :: Int -> Bool
--- prop3 x = (even x && x > 3) || even x
+prop4 :: Int -> Bool
+prop4 x = even x
 
--- TO DO: Finish the task
+container = [("prop1",prop1),("prop2",prop2),("prop3",prop3),("prop4",prop4)]
+
+--Merge sort 
+-- mergeSort:: (Ord a) => [a] -> [a]
+mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort list = 
+              let listLenghtDivided = quot (length list) 2
+                  firstHalf = take listLenghtDivided list
+                  secondHalf = drop listLenghtDivided list
+              in (orderTwoLists (mergeSort firstHalf) (mergeSort secondHalf))
+
+
+orderTwoLists:: (Ord a) => [a] -> [a] -> [a]
+orderTwoLists x [] = x
+orderTwoLists [] y = y
+orderTwoLists list1 list2 = if (head list1) < (head list2) 
+                          then head list1 : orderTwoLists (tail list1) list2 
+                          else head list2 : orderTwoLists list1 (tail list2) 
+
+-- [3,27,38,43] [43]
+-- [9,10,82] []
+
+-- strongerCheck :: ([Char], (Int -> Bool)) -> ([Char], (Int -> Bool)) -> Bool
+-- strongerCheck (_, p1) (_, p2) = stronger p1 p2
 
 --Properties 
 
@@ -200,9 +224,12 @@ isDerangementTest n = apply (n <= 1 && n > 10) (-->) (and (map (isDerangement [0
 apply :: a -> (a -> b -> c) -> b -> c
 apply a f b = f a b
 
+
+
 -- Task 6 - Implementing and testing ROT13 encoding
 
-alphabet = ['a'.. 'z']
+lowers = ['a'..'z']
+capitals = ['A'.. 'Z']
 
 getIndex:: (Eq a) => a -> [a] -> Int
 getIndex l list = getIndex' l list 0 
@@ -212,17 +239,77 @@ getIndex' elem (x:xs) startingPoint =
                       if elem == x then startingPoint
                       else getIndex' elem xs (startingPoint + 1) 
 
-replaceChar:: Int -> Char 
-replaceChar x = 
-       let characterIfMoreThan13 = 13 - (26 - x)
-       in  if (characterIfMoreThan13 >= 0 && x >= characterIfMoreThan13)  then alphabet !! characterIfMoreThan13
-                 else alphabet !! (x + 13)
+capitalLower:: Char -> Char
+capitalLower char = if elem char lowers
+                    then replaceChar (getIndex char lowers) lowers 
+                    else if elem char capitals 
+                    then replaceChar (getIndex char capitals) capitals
+                    else char
+
+replaceChar:: Int -> [Char] -> Char
+replaceChar char alphabet = let charMore13 = 13 - (26 - char)
+                 in  if (charMore13 >= 0 && char >= charMore13)  
+                 then alphabet !! charMore13
+                 else alphabet !! (char + 13)
 
 rot13:: [Char] -> [Char]
-rot13 [] = []
-rot13 list = replaceChar(getIndex(head list) alphabet) : rot13(tail(list)) 
-      
-      
+rot13 xs = [ capitalLower x | x <- xs]
+
+-- Specification 
+-- The input size is equal to output size
+-- Capital letters matter
+-- Every element is replaced by the 13th letter after the input element
+-- Rot13(Rot13) = original word
+
+rot13test:: [Char] -> Bool
+rot13test word = rot13 (rot13 word) == word 
+
+--more test could be done but it is ok now.
+
+-- TASK 8 - IBAN
+
+-- Check that the total IBAN length is correct as per the country. If not, the IBAN is invalid
+-- Move the four initial characters to the end of the string
+-- Replace each letter in the string with two digits, thereby expanding the string, where A = 10, B = 11, ..., Z = 35
+-- Interpret the string as a decimal integer and compute the remainder of that number on division by 97
+--If the remainder is 1, the check digit test is passed and the IBAN might be valid.
+
+moveBack:: [Char] -> [Char]
+moveBack iban = drop 4 iban ++ take 4 iban
+
+replaceLetter:: Char -> Int
+replaceLetter ibanChar = (getIndex ibanChar capitals) + 10
+
+replaceLettersInIban:: [Char] -> [Char]
+replaceLettersInIban [] = []
+replaceLettersInIban (x:xs) = if isNumber x
+                              then  x : (replaceLettersInIban xs)
+                              else (replaceLetter x) : (replaceLettersInIban xs)  
+
+listToInt :: [Integer] -> Integer
+listToInt [] = 0
+listToInt l = if last l > 10 
+              then (last l) + 100 * listToInt (init l)
+              else (last l) + 10 * listToInt (init l)
+
+checkIbanMod:: Integer -> Bool
+checkIbanMod iban = (mod iban 97) == 1
+
+-- Problem with Int && Integer but it is fine
+
+-- iban:: String -> Bool 
+-- iban = checkIbanMod . listToInt . replaceLettersInIban . moveBack
+
+-- Tests: Source Tom 
+-- ibanTestSet, ibanWrongTestSet :: [String]
+-- ibanTestSet = ["AT483200000012345864", "NL79INGB0001611514", "BH02CITI00001077181611", "BG18RZBB91550123456789", "HR1723600001101234565", "DE91100000000123456789", "GB82WEST12345698765432", "GL8964710123456789", "LU120010001234567891", "ES7921000813610123456789"]
+-- ibanWrongTestSet = ["AT403200000012345862", "NL79INGB0001611515", "BH02CITI00001075181611", "BG18RZBB91550123456788", "HR1723600001101233565", "DE91100000000123256789", "GB82WEST12345698764432", "GL8964710123456889", "LU120010001224567891", "ES7921000813611123456789"]
+-- testIban, testWrongIban :: Bool
+-- testIban = foldr (&&) True (map iban ibanTestSet) -- Test iban for all elements in the test set
+-- testWrongIban = foldr (&&) True (map (not . iban) ibanWrongTestSet)
+
+-- Bindings needed
+
 -- Euler 
 -- TASK 1
 divisibleBy3or5:: Int -> Int
