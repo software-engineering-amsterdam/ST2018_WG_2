@@ -33,7 +33,7 @@ fermatFailers k = [x | x <- composites, unsafePerformIO $ primeTestsF k x]
 
 fermatTestReport = do
     let results = [head $ fermatFailers x | x <- [1..6]]
-    print "Test Results for the primeTestsF function:"
+    print "Test Results for the primeTestsF function using Composites:"
     print "+---+------------"
     print "| k | First Fail "
     print "+---+------------"
@@ -64,3 +64,72 @@ fermatTestReport = do
 -- ==  5: Carmichael Fermat Test  ==   40 minutes
 -- ===================================
 
+carmichael :: [Integer]
+carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) | 
+    k <- [2..], 
+    prime (6*k+1), 
+    prime (12*k+1), 
+    prime (18*k+1) ]
+
+fermatCarmichaelFailers :: Int -> [Integer]
+fermatCarmichaelFailers k = [x | x <- carmichael, unsafePerformIO $ primeTestsF k x]
+
+fermatCarmichaelTestReport = do
+    let results = [head $ fermatCarmichaelFailers x | x <- [1..6]]
+    print "Test Results for the primeTestsF function using Carmichael:"
+    print "+---+------------"
+    print "| k | First Fail "
+    print "+---+------------"
+    print ("| 1 | " ++ (show (results !! 0)))
+    print ("| 2 | " ++ (show (results !! 1)))
+    print ("| 3 | " ++ (show (results !! 2)))
+    print ("| 4 | " ++ (show (results !! 3)))
+    print ("| 5 | " ++ (show (results !! 4)))
+    print ("| 6 | " ++ (show (results !! 5)))
+    print "+---+------------"
+
+{-  Result:
+*Lab6> fermatCarmichaelTestReport 
+"Test Results for the primeTestsF function using Carmichael:"
+"+---+------------"
+"| k | First Fail "
+"+---+------------"
+"| 1 | 294409"
+"| 2 | 56052361"
+"| 3 | 56052361"
+"| 4 | 294409"
+"| 5 | 294409"
+"| 6 | 294409"
+"+---+------------"
+-}
+
+-- =====================================
+-- ==  6-1: Miller Rabin Primality  ==   40 minutes
+-- =====================================
+
+millerRabinFailers :: Int -> [Integer]
+millerRabinFailers k = [x | x <- composites, unsafePerformIO $ primeMR k x]
+
+millerRabinTestReport = do
+    let results = [head $ millerRabinFailers x | x <- [1..6]]
+    print "Test Results for the primeMR function using Composites:"
+    print "+---+------------"
+    print "| k | First Fail "
+    print "+---+------------"
+    print ("| 1 | " ++ (show (results !! 0)))
+    print ("| 2 | " ++ (show (results !! 1)))
+    print ("| 3 | " ++ (show (results !! 2)))
+    print ("| 4 | " ++ (show (results !! 3)))
+    print ("| 5 | " ++ (show (results !! 4)))
+    print ("| 6 | " ++ (show (results !! 5)))
+    print "+---+------------"
+
+{-  Result:
+-}
+
+-- ====================================
+-- ==  6-2: MR-Mersenne Generator  ==   40 minutes
+-- ====================================
+
+millerRabinMersenneGen :: [Integer]
+millerRabinMersenneGen = [2^p-1 | p <- primes, unsafePerformIO $ primeMR 2 (2^p - 1)]
