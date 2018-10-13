@@ -2,6 +2,7 @@ module Lab6
 
 where
 
+import System.IO.Unsafe
 import Lecture6
 
 highestPowerOfTwo :: Int -> Int
@@ -22,4 +23,44 @@ notIn n (x:xs)
     | n < x = True
     | n == x = False
     | otherwise = notIn n xs
+
+-- =========================
+-- ==  4: Fermat Fails  ==   40 minutes
+-- =========================
+
+fermatFailers :: Int -> [Integer]
+fermatFailers k = [x | x <- composites, unsafePerformIO $ primeTestsF k x]
+
+fermatTestReport = do
+    let results = [head $ fermatFailers x | x <- [1..6]]
+    print "Test Results for the primeTestsF function:"
+    print "+---+------------"
+    print "| k | First Fail "
+    print "+---+------------"
+    print ("| 1 | " ++ (show (results !! 0)))
+    print ("| 2 | " ++ (show (results !! 1)))
+    print ("| 3 | " ++ (show (results !! 2)))
+    print ("| 4 | " ++ (show (results !! 3)))
+    print ("| 5 | " ++ (show (results !! 4)))
+    print ("| 6 | " ++ (show (results !! 5)))
+    print "+---+------------"
+
+{-  Result:
+*Lab6> fermatTestReport 
+"Test Results for the primeTestsF function:"
+"+---+------------"
+"| k | First Fail "
+"+---+------------"
+"| 1 | 35"
+"| 2 | 703"
+"| 3 | 561"
+"| 4 | 1105"
+"| 5 | 1105"
+"| 6 | 1729"
+"+---+------------"
+-}
+
+-- ===================================
+-- ==  5: Carmichael Fermat Test  ==   40 minutes
+-- ===================================
 
