@@ -125,6 +125,15 @@ millerRabinTestReport = do
     print "+---+------------"
 
 {-  Result:
+*Lab6> millerRabinTestReport 
+"Test Results for the primeMR function using Composites:"
+"+---+------------"
+"| k | First Fail "
+"+---+------------"
+"| 1 | 172"
+"| 2 | 12403"
+"| 3 | 4033"
+"| 4 | ^CInterrupted. -> Took too damn long
 -}
 
 -- ====================================
@@ -133,3 +142,14 @@ millerRabinTestReport = do
 
 millerRabinMersenneGen :: [Integer]
 millerRabinMersenneGen = [2^p-1 | p <- primes, unsafePerformIO $ primeMR 2 (2^p - 1)]
+
+{-  Result:
+*Lab6> take 7 millerRabinMersenneGen 
+[3, 7, 31, 127, 8191, 131071, 524287]
+
+The actual first seven Mersenne primes are:
+(source: https://oeis.org/A000668)
+[3, 7, 31, 127, 8191, 131071, 524287]
+
+Asking the generator for any more overloaded my RAM. It seems the Miller-Rabinson primlity test is strong enough to legitimitely find the first seven Mersenne primes. The question of whether this holds up for larger primes can only be answered by  machine more powerful than my BYOD laptop.
+-}
