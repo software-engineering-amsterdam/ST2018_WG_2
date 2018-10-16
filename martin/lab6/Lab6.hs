@@ -34,24 +34,24 @@ exercise46SingleResult fun k list = do
     result <- findSmallestCounterExample fun k list
     print $ "k = " ++ (show k) ++ " ==> " ++ (show result)
 
-
 exercise4Tests = do
     print "Smallest composite number fooling fermat test with k checks"
     exercise46SingleResult primeTestsF 2 composites
     exercise46SingleResult primeTestsF 3 composites
     exercise46SingleResult primeTestsF 4 composites
     
+exercise5Tests = do
+    print "Smallest carmichael number fooling Fermat test with k checks"
+    exercise46SingleResult primeTestsF 1 carmichael
+    exercise46SingleResult primeTestsF 2 carmichael
+    exercise46SingleResult primeTestsF 3 carmichael
 
 exercise6Tests = do
     print "Smallest composite number fooling MR test with k checks"
-    exercise46SingleResult primeMR 1 composites -- =  9
-    exercise46SingleResult primeMR 2 composites
-    exercise46SingleResult primeMR 3 composites
-
-    print "Smallest carmichael number fooling MR test with k checks"
-    exercise46SingleResult primeMR 1 carmichael
+    exercise46SingleResult primeMR 1 carmichael -- =  9
     exercise46SingleResult primeMR 2 carmichael
     exercise46SingleResult primeMR 3 carmichael
+
 
 
 carmichael :: [Integer]
@@ -69,9 +69,7 @@ You can use the Miller-Rabin primality check to discover some large Mersenne pri
 
 
 mrMersenneTest :: Integer -> Int -> IO Bool
-mrMersenneTest primeNum k 
-    | (not $ prime primeNum) = error "Did not supply prime number"
-    | otherwise = do 
+mrMersenneTest primeNum k = do 
         let z = 2 ^ primeNum -1
         mrResult <- primeMR k z
         return mrResult
