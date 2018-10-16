@@ -73,24 +73,51 @@ exercise4Tests = do
     exercise46SingleResult primeTestsF 2 composites
     exercise46SingleResult primeTestsF 3 composites
     exercise46SingleResult primeTestsF 4 composites
+
+{-  Result:
+*Lab6> exercise4Tests 
+"Smallest composite number fooling fermat test with k checks"
+"k = 2 ==> 861"
+"k = 3 ==> 1105"
+"k = 4 ==> 1105"
+
+We see that as k increases, the smallest counterexample that slips through the Fermat test becomes larger. This is to be expected since a larger number of tests also decreases the likelihood of finding a counterexample, which makes the average smallest counterexample that we find likely to be larger than originally.
+-}
    
 -- ====================================================
 -- ==  5: Fermat Fails using Carmichael numbers:  ==   40 minutes
 -- ====================================================
+{-  Result:
+*Lab6> exercise5Tests 
+"Smallest Carmichael number fooling Fermat test with k checks"
+"k = 1 ==> 294409"
+"k = 2 ==> 294409"
+"k = 3 ==> 56052361"
+-}
+
 exercise5Tests = do
-    print "Smallest carmichael number fooling Fermat test with k checks"
+    print "Smallest Carmichael number fooling Fermat test with k checks"
     exercise46SingleResult primeTestsF 1 carmichael
     exercise46SingleResult primeTestsF 2 carmichael
     exercise46SingleResult primeTestsF 3 carmichael
 
 -- ==========================================================
--- ==  6: Miller-Rabin Fails using Carmichael numbers:  ==   40 minutes
+-- ==  6-1: Miller-Rabin Fails using Carmichael numbers:  ==   40 minutes
 -- ==========================================================
+{-  Result:
+"Smallest Carmichael number fooling MR test with k checks"
+"k = 1 ==> 216821881"
+"k = 2 ==> 3719466204049"
+"k = 3 ==> 15021804274836409"
+-}
+
 exercise6Tests = do
-    print "Smallest composite number fooling MR test with k checks"
+    print "Smallest Carmichael number fooling MR test with k checks"
     exercise46SingleResult primeMR 1 carmichael -- =  9
     exercise46SingleResult primeMR 2 carmichael
     exercise46SingleResult primeMR 3 carmichael
+
+-- TODO: Insert explanation
 
 -- ====================================
 -- ==  6-2: MR-Mersenne Generator  ==   40 minutes
@@ -108,4 +135,7 @@ The actual first twelve Mersenne primes are:
 [3, 7, 31, 127, 8191, 131071, 524287, 2147483647, 2305843009213693951, 618970019642690137449562111, 162259276829213363391578010288127, 170141183460469231731687303715884105727]
 -}
 
--- TODO: Provide alternative solution without unsafePerformIO
+-- TODO JM: Insert  explanation
+-- TODO MS: Provide alternative solution without unsafePerformIO
+
+-- TODO JM: Make up times
