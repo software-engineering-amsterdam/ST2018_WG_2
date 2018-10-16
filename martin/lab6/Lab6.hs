@@ -25,7 +25,7 @@ nats = [1..]
 composites :: [Integer]
 composites = filter (not . prime) nats
 
-findSmallestCounterExample :: (Int -> Integer -> IO Bool) ->  Int -> [Integer] -> IO Integer
+findSmallestCounterExample :: (Int -> Integer -> IO Bool) ->  Int -> [Integer] -> IO Integer    
 findSmallestCounterExample fun k (x:xs) = do 
     result <- fun k x
     if result then return x else findSmallestCounterExample fun k xs
@@ -37,6 +37,7 @@ exercise46SingleResult fun k list = do
 
 exercise4Tests = do
     print "Smallest composite number fooling fermat test with k checks"
+    exercise46SingleResult primeTestsF 1 composites
     exercise46SingleResult primeTestsF 2 composites
     exercise46SingleResult primeTestsF 3 composites
     exercise46SingleResult primeTestsF 4 composites
@@ -47,6 +48,7 @@ exercise6Tests = do
     exercise46SingleResult primeMR 1 composites -- =  9
     exercise46SingleResult primeMR 2 composites
     exercise46SingleResult primeMR 3 composites
+    exercise46SingleResult primeMR 4 composites
 
     print "Smallest carmichael number fooling MR test with k checks"
     exercise46SingleResult primeMR 1 carmichael
@@ -69,15 +71,26 @@ You can use the Miller-Rabin primality check to discover some large Mersenne pri
 
 
 mrMersenneTest :: Integer -> Int -> IO Bool
-mrMersenneTest primeNum k 
-    | (not $ prime primeNum) = error "Did not supply prime number"
-    | otherwise = do 
-        let z = 2 ^ primeNum -1
-        mrResult <- primeMR k z
-        return mrResult
+mrMersenneTest primeNum k  = primeMR k (2 ^ primeNum -1)
 
 
-mrMersennePrimeGenerator (x:xs)
-    result <- mrMersenneTest x 3
-    if result then x : mrMersennePrimeGenerator xs 
-        else mrMersennePrimeGenerator xs
+--generates a list of potential mersenne primes for given list
+--uses miller rabin test to classify primality
+mrMersennePrimeGenerator [] = return []
+mrMersennePrimeGenerator (x:xs) = do 
+    result <- mrMersenneTest x 1
+    recurse <- mrMersennePrimeGenerator xs
+    if result then return (x : recurse ) 
+        else return recurse
+
+
+mrMersennePrimeEvaluator = do 
+    result <- mrMersennePrimeGenerator (take 10000 primes)
+    let wronglyClassified = filter (\z -> (not (elem z  [mers x | x <- [1..25]]))) result
+    print "MR test to find Mersenne primes found the following non-Mersenne pseudoprimes:"
+    print wronglyClassified
+
+{-
+mrMersennePrimeGenerator (take 1000 primes )
+[2,3,5,7,13,17,19,31,61,89,107,127,521,607,1279,2203,2281,3217,4253,4423]
+-}
