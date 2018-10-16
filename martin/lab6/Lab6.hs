@@ -48,18 +48,8 @@ exercise5Tests = do
     exercise46SingleResult primeTestsF 3 carmichael
 
 exercise6Tests = do
-    print "Smallest composite number fooling MR test with k checks"
-<<<<<<< HEAD
-    exercise46SingleResult primeMR 1 carmichael -- =  9
-=======
-    exercise46SingleResult primeMR 1 composites -- =  9
-    exercise46SingleResult primeMR 2 composites
-    exercise46SingleResult primeMR 3 composites
-    exercise46SingleResult primeMR 4 composites
-
     print "Smallest carmichael number fooling MR test with k checks"
     exercise46SingleResult primeMR 1 carmichael
->>>>>>> 2d148905beae95c2f21783a267f370fac4446328
     exercise46SingleResult primeMR 2 carmichael
     exercise46SingleResult primeMR 3 carmichael
 
@@ -73,25 +63,12 @@ carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) |
        prime (18*k+1) ]
 
 
-
 {-
 You can use the Miller-Rabin primality check to discover some large Mersenne primes. The recipe: take a prime p, and use the Miller-Rabin algorithm to check whether 2^p −1 is also prime. Find information about Mersenne primes on internet and check whether the numbers that you found are genuine Mersenne primes. Report on your findings.
 -}
 
 
 mrMersenneTest :: Integer -> Int -> IO Bool
-<<<<<<< HEAD
-mrMersenneTest primeNum k = do 
-        let z = 2 ^ primeNum -1
-        mrResult <- primeMR k z
-        return mrResult
-
-
-mrMersennePrimeGenerator (x:xs)
-    result <- mrMersenneTest x 3
-    if result then x : mrMersennePrimeGenerator xs 
-        else mrMersennePrimeGenerator xs
-=======
 mrMersenneTest primeNum k  = primeMR k (2 ^ primeNum -1)
 
 
@@ -115,4 +92,3 @@ mrMersennePrimeEvaluator = do
 mrMersennePrimeGenerator (take 1000 primes )
 [2,3,5,7,13,17,19,31,61,89,107,127,521,607,1279,2203,2281,3217,4253,4423]
 -}
->>>>>>> 2d148905beae95c2f21783a267f370fac4446328

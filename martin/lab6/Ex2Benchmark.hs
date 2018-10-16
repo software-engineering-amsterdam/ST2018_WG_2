@@ -5,12 +5,12 @@ import Lecture6
 
 --source: http://hackage.haskell.org/package/criterion-0.5.0.10/docs/Criterion-Main.html
 main = defaultMain [
-        bgroup "Our implementation" [ bench "10" $ whnf (exM 10 20) 10, 
-        							  bench "100" $ whnf (exM 10 100) 10
+        bgroup "Our implementation" [ bench "mod 10" $ whnf (exM 10 20) 10, 
+                                      bench "mod 10000" $ whnf (exM 10 10000) 10
                      ],
 
-        bgroup "Haskell implementation" [ bench "10" $ whnf (expM 10 20) 10,
-        								  bench "100" $ whnf (expM 10 100) 10
+        bgroup "Haskell implementation" [ bench "mod 10" $ whnf (expM 10 20) 10,
+                                          bench "mod 10000" $ whnf (expM 10 10000) 10
                      ]
                     ]
 
