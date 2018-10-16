@@ -5,9 +5,10 @@ where
 import System.IO.Unsafe
 import Lecture6
 
-highestPowerOfTwo :: Int -> Int
-highestPowerOfTwo n = maximum [x | x <- [1..n], elem x [2^y | y <- [1..n]]]
-
+-- =======================
+-- ==  1: Faster exM  ==
+-- =======================
+-- see The implementation of exM in Lecture6
 
 -- =======================
 -- ==  3: Composites  ==   20 minutes
@@ -101,6 +102,8 @@ fermatCarmichaelTestReport = do
 "| 5 | 294409"
 "| 6 | 294409"
 "+---+------------"
+
+The Fermat Primality test relies on chance to find a number that can be used to divide the number that is to be checked. Since carmichael numbers consist of the product of three fairly large primes, they have very little divisors that can be found by chance. Therfore, the carmichael numbers that falsely pass the Fermat test have a strong likelihood to be larger than ordinary composite numbers.
 -}
 
 -- =====================================
@@ -151,5 +154,5 @@ The actual first seven Mersenne primes are:
 (source: https://oeis.org/A000668)
 [3, 7, 31, 127, 8191, 131071, 524287]
 
-Asking the generator for any more overloaded my RAM. It seems the Miller-Rabinson primlity test is strong enough to legitimitely find the first seven Mersenne primes. The question of whether this holds up for larger primes can only be answered by  machine more powerful than my BYOD laptop.
+Asking the generator for any more overloaded my RAM. It seems the Miller-Rabinson primlity test is strong enough to legitimitely find the first seven Mersenne primes. The question of whether this holds up for larger primes can only be answered by a machine more powerful than my BYOD laptop.
 -}

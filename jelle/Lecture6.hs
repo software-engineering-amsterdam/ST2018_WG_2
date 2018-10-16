@@ -110,8 +110,14 @@ coprimes = filter (uncurry coprime) pairs
 expM ::  Integer -> Integer -> Integer -> Integer
 expM x y = rem (x^y)
 
+-- helper function that returns the largest power of two in a given number.
+largestPowerOf2 :: Integer -> Integer
+largestPowerOf2 n = (\x -> 2^x) $ fst $ helper (1,n) where
+  helper = until (\(x,y) -> 2^(x+1) > y) (\(x,y) -> (x+1,y))
+
+-- take a base (b) number, an exponent (e), and the number to modulo (m) with, assume all of these numbers are positive integers.
 exM :: Integer -> Integer -> Integer -> Integer
-exM = expM -- to be replaced by a fast version
+exM b e m = 10
 
 primeTestF :: Integer -> IO Bool
 primeTestF n = do 
