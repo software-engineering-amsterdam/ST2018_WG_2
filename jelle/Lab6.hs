@@ -2,8 +2,10 @@ module Lab6
 
 where
 
-import System.IO.Unsafe
 import Lecture6
+import System.IO.Unsafe
+import System.Random
+import Test.QuickCheck
 
 -- =======================
 -- ==  1: Faster exM  ==
@@ -145,6 +147,24 @@ millerRabinTestReport = do
 
 millerRabinMersenneGen :: [Integer]
 millerRabinMersenneGen = [2^p-1 | p <- primes, unsafePerformIO $ primeMR 2 (2^p - 1)]
+
+
+-- isMRMersennePrime :: Integer -> IO Bool
+-- isMRMersennePrime p = primeMR 2 (2^p - 1)
+
+-- mrGenStep :: [Integer] -> IO [Integer]
+-- mrGenStep [] = return []
+-- mrGenStep (x:xs) = do
+--     result <- isMRMersennePrime x 
+--     if result 
+--         then do 
+--             nextResult <- mrGenStep xs
+--             return (x:nextResult) 
+--         else mrGenStep xs
+
+-- millerRabinMersenneGen :: IO [Integer]
+-- millerRabinMersenneGen = do
+--     mrGenStep primes
 
 {-  Result:
 *Lab6> take 7 millerRabinMersenneGen 

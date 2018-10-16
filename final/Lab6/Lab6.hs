@@ -2,13 +2,33 @@ module Lab6
 
 where
 
-import System.IO.Unsafe
 import Lecture6
+import System.IO.Unsafe
+import System.Random
+import Test.QuickCheck
 
 -- =======================
 -- ==  1: Faster exM  ==
 -- =======================
--- see The implementation of exM in Lecture6
+
+-- See The implementation of exM in Lecture6
+infix 1 --> 
+
+(-->) :: Bool -> Bool -> Bool
+p --> q = (not p) || q
+
+exercise1Tests = do
+    let res = [ (x,y,b) | x <- [1..20], y <- [1..20], b <- [5..20], exM x y b /= expM x y b]
+    print "Testing implementation of exM via deterministic tests"
+    print $ null res
+    print "Testing implementation of exM via QuickCheck"
+    quickCheckResult(\(x,y) -> x > 2 && y >= 1 --> exM x y 10 == expM x y 10)
+
+-- =======================
+-- ==  2: Faster exM  ==
+-- =======================
+
+-- see file Ex2Benchmark.hs
 
 -- =======================
 -- ==  3: Composites  ==   20 minutes
@@ -29,115 +49,48 @@ notIn n (x:xs)
 -- ==  4: Fermat Fails  ==   40 minutes
 -- =========================
 
-fermatFailers :: Int -> [Integer]
-fermatFailers k = [x | x <- composites, unsafePerformIO $ primeTestsF k x]
-
-fermatTestReport = do
-    let results = [head $ fermatFailers x | x <- [1..6]]
-    print "Test Results for the primeTestsF function using Composites:"
-    print "+---+------------"
-    print "| k | First Fail "
-    print "+---+------------"
-    print ("| 1 | " ++ (show (results !! 0)))
-    print ("| 2 | " ++ (show (results !! 1)))
-    print ("| 3 | " ++ (show (results !! 2)))
-    print ("| 4 | " ++ (show (results !! 3)))
-    print ("| 5 | " ++ (show (results !! 4)))
-    print ("| 6 | " ++ (show (results !! 5)))
-    print "+---+------------"
-
-{-  Result:
-*Lab6> fermatTestReport 
-"Test Results for the primeTestsF function:"
-"+---+------------"
-"| k | First Fail "
-"+---+------------"
-"| 1 | 35"
-"| 2 | 703"
-"| 3 | 561"
-"| 4 | 1105"
-"| 5 | 1105"
-"| 6 | 1729"
-"+---+------------"
--}
-
--- ===================================
--- ==  5: Carmichael Fermat Test  ==   40 minutes
--- ===================================
-
+-- Cramichael number generator
 carmichael :: [Integer]
 carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) | 
-    k <- [2..], 
-    prime (6*k+1), 
-    prime (12*k+1), 
-    prime (18*k+1) ]
+       k <- [2..], 
+       prime (6*k+1), 
+       prime (12*k+1), 
+       prime (18*k+1) ]
 
-fermatCarmichaelFailers :: Int -> [Integer]
-fermatCarmichaelFailers k = [x | x <- carmichael, unsafePerformIO $ primeTestsF k x]
+-- helper function that takes a function to check numbers with and produces the smalles counterexample it can find. We use this function throughout our answers to exercises 4, 5, and 6.
+findSmallestCounterExample :: (Int -> Integer -> IO Bool) ->  Int -> [Integer] -> IO Integer
+findSmallestCounterExample fun k (x:xs) = do 
+    result <- fun k x
+    if result then return x else findSmallestCounterExample fun k xs
 
-fermatCarmichaelTestReport = do
-    let results = [head $ fermatCarmichaelFailers x | x <- [1..6]]
-    print "Test Results for the primeTestsF function using Carmichael:"
-    print "+---+------------"
-    print "| k | First Fail "
-    print "+---+------------"
-    print ("| 1 | " ++ (show (results !! 0)))
-    print ("| 2 | " ++ (show (results !! 1)))
-    print ("| 3 | " ++ (show (results !! 2)))
-    print ("| 4 | " ++ (show (results !! 3)))
-    print ("| 5 | " ++ (show (results !! 4)))
-    print ("| 6 | " ++ (show (results !! 5)))
-    print "+---+------------"
+exercise46SingleResult fun k list = do
+    result <- findSmallestCounterExample fun k list
+    print $ "k = " ++ (show k) ++ " ==> " ++ (show result)
 
-{-  Result:
-*Lab6> fermatCarmichaelTestReport 
-"Test Results for the primeTestsF function using Carmichael:"
-"+---+------------"
-"| k | First Fail "
-"+---+------------"
-"| 1 | 294409"
-"| 2 | 56052361"
-"| 3 | 56052361"
-"| 4 | 294409"
-"| 5 | 294409"
-"| 6 | 294409"
-"+---+------------"
+-- actual tests for exercise 4:
+exercise4Tests = do
+    print "Smallest composite number fooling fermat test with k checks"
+    exercise46SingleResult primeTestsF 2 composites
+    exercise46SingleResult primeTestsF 3 composites
+    exercise46SingleResult primeTestsF 4 composites
+   
+-- ====================================================
+-- ==  5: Fermat Fails using Carmichael numbers:  ==   40 minutes
+-- ====================================================
+exercise5Tests = do
+    print "Smallest carmichael number fooling Fermat test with k checks"
+    exercise46SingleResult primeTestsF 1 carmichael
+    exercise46SingleResult primeTestsF 2 carmichael
+    exercise46SingleResult primeTestsF 3 carmichael
 
-The Fermat Primality test relies on chance to find a number that can be used to divide the number that is to be checked. Since carmichael numbers consist of the product of three fairly large primes, they have very little divisors that can be found by chance. Therfore, the carmichael numbers that falsely pass the Fermat test have a strong likelihood to be larger than ordinary composite numbers.
--}
-
--- =====================================
--- ==  6-1: Miller Rabin Primality  ==   40 minutes
--- =====================================
-
-millerRabinFailers :: Int -> [Integer]
-millerRabinFailers k = [x | x <- composites, unsafePerformIO $ primeMR k x]
-
-millerRabinTestReport = do
-    let results = [head $ millerRabinFailers x | x <- [1..6]]
-    print "Test Results for the primeMR function using Composites:"
-    print "+---+------------"
-    print "| k | First Fail "
-    print "+---+------------"
-    print ("| 1 | " ++ (show (results !! 0)))
-    print ("| 2 | " ++ (show (results !! 1)))
-    print ("| 3 | " ++ (show (results !! 2)))
-    print ("| 4 | " ++ (show (results !! 3)))
-    print ("| 5 | " ++ (show (results !! 4)))
-    print ("| 6 | " ++ (show (results !! 5)))
-    print "+---+------------"
-
-{-  Result:
-*Lab6> millerRabinTestReport 
-"Test Results for the primeMR function using Composites:"
-"+---+------------"
-"| k | First Fail "
-"+---+------------"
-"| 1 | 172"
-"| 2 | 12403"
-"| 3 | 4033"
-"| 4 | ^CInterrupted. -> Took too damn long
--}
+-- ==========================================================
+-- ==  6: Miller-Rabin Fails using Carmichael numbers:  ==   40 minutes
+-- ==========================================================
+exercise6Tests = do
+    print "Smallest composite number fooling MR test with k checks"
+    exercise46SingleResult primeMR 1 carmichael -- =  9
+    exercise46SingleResult primeMR 2 carmichael
+    exercise46SingleResult primeMR 3 carmichael
 
 -- ====================================
 -- ==  6-2: MR-Mersenne Generator  ==   40 minutes
@@ -147,12 +100,12 @@ millerRabinMersenneGen :: [Integer]
 millerRabinMersenneGen = [2^p-1 | p <- primes, unsafePerformIO $ primeMR 2 (2^p - 1)]
 
 {-  Result:
-*Lab6> take 7 millerRabinMersenneGen 
-[3, 7, 31, 127, 8191, 131071, 524287]
+*Lab6> take 12 millerRabinMersenneGen 
+[3, 7, 31, 127, 8191, 131071, 524287, 2147483647, 2305843009213693951, 618970019642690137449562111, 162259276829213363391578010288127, 170141183460469231731687303715884105727]
 
-The actual first seven Mersenne primes are:
+The actual first twelve Mersenne primes are:
 (source: https://oeis.org/A000668)
-[3, 7, 31, 127, 8191, 131071, 524287]
-
-Asking the generator for any more overloaded my RAM. It seems the Miller-Rabinson primlity test is strong enough to legitimitely find the first seven Mersenne primes. The question of whether this holds up for larger primes can only be answered by a machine more powerful than my BYOD laptop.
+[3, 7, 31, 127, 8191, 131071, 524287, 2147483647, 2305843009213693951, 618970019642690137449562111, 162259276829213363391578010288127, 170141183460469231731687303715884105727]
 -}
+
+-- TODO: Provide alternative solution without unsafePerformIO
