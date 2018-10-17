@@ -6,7 +6,7 @@ import Lecture6
 import System.IO.Unsafe
 import System.Random
 import Test.QuickCheck
-
+import Data.List
 
 infix 1 --> 
 
@@ -48,18 +48,8 @@ composites = filter (not . prime) [1..]
 
 
 -- =========================
--- ==  4: Fermat Fails  ==   40 minutes
+-- ==  4: Fermat Fails  ==   1:30 hours
 -- =========================
-
-{-  Result:
-*Lab6> exercise4Tests 
-"Smallest composite number fooling fermat test with k checks"
-"k = 2 ==> 861"
-"k = 3 ==> 1105"
-"k = 4 ==> 1105"
-
-We see that as k increases, the smallest counterexample that slips through the Fermat test becomes larger. This is to be expected since a larger number of tests also decreases the likelihood of finding a counterexample, which makes the average smallest counterexample that we find likely to be larger than originally.
--}
 
 -- Carmichael number generator
 carmichael :: [Integer]
@@ -89,17 +79,20 @@ exercise4Tests = do
     counterExampleResult primeTestsF 3 composites
     counterExampleResult primeTestsF 4 composites
 
+{-  Result:
+*Lab6> exercise4Tests 
+"Smallest composite number fooling fermat test with k checks"
+"k = 2 ==> 861"
+"k = 3 ==> 1105"
+"k = 4 ==> 1105"
+
+We see that as k increases, the smallest counterexample that slips through the Fermat test becomes larger. This is to be expected since a larger number of tests also decreases the likelihood of finding a counterexample, which makes the average smallest counterexample that we find likely to be larger than originally.
+-}
 
 -- ====================================================
--- ==  5: Fermat Fails using Carmichael numbers:  ==   40 minutes
+-- ==  5: Fermat Fails using Carmichael numbers:  ==   1 hour
 -- ====================================================
-{-  Result:
-*Lab6> exercise5Tests 
-"Smallest Carmichael number fooling Fermat test with k checks"
-"k = 1 ==> 294409"
-"k = 2 ==> 294409"
-"k = 3 ==> 56052361"
--}
+
 exercise5Tests :: IO ()
 exercise5Tests = do
     print "Smallest Carmichael number fooling Fermat test with k checks"
@@ -107,15 +100,17 @@ exercise5Tests = do
     counterExampleResult primeTestsF 2 carmichael
     counterExampleResult primeTestsF 3 carmichael
 
--- ==========================================================
--- ==  6-1: Miller-Rabin Fails using Carmichael numbers:  ==   40 minutes
--- ==========================================================
 {-  Result:
-"Smallest Carmichael number fooling MR test with k checks"
-"k = 1 ==> 216821881"
-"k = 2 ==> 3719466204049"
-"k = 3 ==> 15021804274836409"
+*Lab6> exercise5Tests 
+"Smallest Carmichael number fooling Fermat test with k checks"
+"k = 1 ==> 294409"
+"k = 2 ==> 294409"
+"k = 3 ==> 56052361"
 -}
+
+-- ==========================================================
+-- ==  6-1: Miller-Rabin Fails using Carmichael numbers:  ==   1 hour
+-- ==========================================================
 
 exercise6Tests :: IO ()
 exercise6Tests = do
@@ -124,16 +119,26 @@ exercise6Tests = do
     counterExampleResult primeMR 2 carmichael
     counterExampleResult primeMR 3 carmichael
 
--- TODO: Insert explanation
+{-  Result:
+"Smallest Carmichael number fooling MR test with k checks"
+"k = 1 ==> 216821881"          (5th Carmichael number)
+"k = 2 ==> 3719466204049"      (40th Carmichael number)
+"k = 3 ==> 15021804274836409"  (288th Carmichael number)
+                               (numbers found using Data.List.elemIndex)
+-}
+
+-- Because all Carmichael numbers are composed of the product of three rather large primes, it is very unlikely for the Miller-Rabin primality test to find a divisor for the provided number, since there are none. This can be noticed by that in the first test, the fifth carmichael number already fools the test. As we increase the number of tests, our likelihood of busting a Carmichael number significantly increases, and the test isn't fooled until the 40th number when using two tests.
 
 -- ====================================
--- ==  6-2: MR-Mersenne Generator  ==   40 minutes
+-- ==  6-2: MR-Mersenne Generator  ==   1:30 hours
 -- ====================================
 
+-- Solution one, somewhat hacky list comprehension generator making use of unsafePerformIO to get rid of IO wrapers around primeMR results. The charm of solving this in one very elegant line that provides us with an infinitely cconstructing list outweighs the hackyness of using unsafePerformIO.
 millerRabinMersenneGen :: [Integer]
 millerRabinMersenneGen = [2^p-1 | p <- primes, unsafePerformIO $ primeMR 2 (2^p - 1)]
 
 
+-- Solution two:
 mrMersenneTest :: Integer -> Int -> IO Bool
 mrMersenneTest primeNum k  = primeMR k (2 ^ primeNum -1)
 
@@ -160,7 +165,6 @@ mrMersennePrimeGenerator (take 1000 primes )
 [2,3,5,7,13,17,19,31,61,89,107,127,521,607,1279,2203,2281,3217,4253,4423]
 -}
 
-
 {-  Result:
 *Lab6> take 12 millerRabinMersenneGen 
 [3, 7, 31, 127, 8191, 131071, 524287, 2147483647, 2305843009213693951, 618970019642690137449562111, 162259276829213363391578010288127, 170141183460469231731687303715884105727]
@@ -170,6 +174,4 @@ The actual first twelve Mersenne primes are:
 [3, 7, 31, 127, 8191, 131071, 524287, 2147483647, 2305843009213693951, 618970019642690137449562111, 162259276829213363391578010288127, 170141183460469231731687303715884105727]
 -}
 
--- TODO JM: Insert  explanation
-
--- TODO JM: Make up times
+-- The provided Miller-Rabin Mersenne Prime number generator seems to be perfectly able to generate at least the first twelve Mersenne primes without allowing any imposters through the check. It is expected that as we increase the amount of Mersenne primes that we ask for we could find some imposters, simply because the odds would shift as we introduce more imposters that could pass the check. For now the MR primality check is strong enough to correctly classify Mersenne primes large enough to be in the 10^39 order of magnitude.
